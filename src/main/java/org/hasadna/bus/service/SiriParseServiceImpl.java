@@ -11,7 +11,7 @@ import java.text.MessageFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Date;
+import java.util.*;
 
 @Component
 public class SiriParseServiceImpl implements SiriParseService {
@@ -20,35 +20,45 @@ public class SiriParseServiceImpl implements SiriParseService {
 //        if (!sm.getAnswer().getStatus()) {
 //            return "---";
 //        }
-        String s = "";
-        BigDecimal lon = BigDecimal.ZERO;
-        BigDecimal lat = BigDecimal.ZERO;
-        //DateTimeFormatter dtf = DateTimeFormatter.ISO_DATE_TIME;
-        //LocalDateTime ldt = sm.getAnswer().getResponseTimestamp().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
-        String date = formatDate(sm.getAnswer().getResponseTimestamp());
-        s = s + date + "\n";
+        SortedMap<String, MonitoredStopVisitStructure> visits = new TreeMap<>();
+        Set<String> licensePlates = new HashSet<>();
         for (StopMonitoringDeliveryStructure smd : sm.getAnswer().getStopMonitoringDelivery()) {
             for (MonitoredStopVisitStructure visit : smd.getMonitoredStopVisit()) {
-                String lineRef = visit.getMonitoredVehicleJourney().getLineRef().getValue();
-                visit.getMonitoredVehicleJourney().getMonitoredCall().isVehicleAtStop();
-                Date expectedArrivalTime = visit.getMonitoredVehicleJourney().getMonitoredCall().getExpectedArrivalTime();
-                if (visit.getMonitoredVehicleJourney().getVehicleLocation() != null) {
-                    lon = visit.getMonitoredVehicleJourney().getVehicleLocation().getLongitude();
-                    lat = visit.getMonitoredVehicleJourney().getVehicleLocation().getLatitude();
-                }
-                String lineName = visit.getMonitoredVehicleJourney().getPublishedLineName().getValue();
-                visit.getMonitoredVehicleJourney().getDestinationRef();
                 if (visit.getMonitoredVehicleJourney().getVehicleRef() == null) {
                     //logger.warn("null vehicleRef");
                     continue;
                 }
                 String licensePlate = visit.getMonitoredVehicleJourney().getVehicleRef().getValue();
-
-                Date recordedAt = visit.getRecordedAtTime();
+                if (licensePlates.contains(licensePlate)) {
+                    continue;   // TODO check if rest of the data is also the same
+                }
                 Date departureTime = visit.getMonitoredVehicleJourney().getOriginAimedDepartureTime();
-                String rep = stringRepresentation(lineRef, lineName, recordedAt, expectedArrivalTime, licensePlate, lon, lat, departureTime);
-                s = s + rep + "\n";
+                licensePlates.add(licensePlate);
+                visits.put(formatTimeHHMM(departureTime), visit);   // ??? not sorted if there are visits in different days
             }
+        }
+        String s = "";
+        String date = formatDate(sm.getAnswer().getResponseTimestamp());
+        s = s + "\n" + date + "\n";
+        for (String key : visits.keySet()) {
+            MonitoredStopVisitStructure visit = visits.get(key);
+            String licensePlate = visit.getMonitoredVehicleJourney().getVehicleRef().getValue();
+            String lineRef = visit.getMonitoredVehicleJourney().getLineRef().getValue();
+            visit.getMonitoredVehicleJourney().getMonitoredCall().isVehicleAtStop();
+            Date expectedArrivalTime = visit.getMonitoredVehicleJourney().getMonitoredCall().getExpectedArrivalTime();
+            BigDecimal lon = BigDecimal.ZERO;
+            BigDecimal lat = BigDecimal.ZERO;
+            if (visit.getMonitoredVehicleJourney().getVehicleLocation() != null) {
+                lon = visit.getMonitoredVehicleJourney().getVehicleLocation().getLongitude();
+                lat = visit.getMonitoredVehicleJourney().getVehicleLocation().getLatitude();
+            }
+            String lineName = visit.getMonitoredVehicleJourney().getPublishedLineName().getValue();
+            visit.getMonitoredVehicleJourney().getDestinationRef();
+
+            Date recordedAt = visit.getRecordedAtTime();
+            Date departureTime = visit.getMonitoredVehicleJourney().getOriginAimedDepartureTime();
+            String rep = stringRepresentation(lineRef, lineName, recordedAt, expectedArrivalTime, licensePlate, lon, lat, departureTime);
+            s = s + rep + "\n";
         }
         return s;
     }
