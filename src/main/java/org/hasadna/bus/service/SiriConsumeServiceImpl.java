@@ -159,9 +159,9 @@ public class SiriConsumeServiceImpl implements SiriConsumeService {
 
         HttpEntity<String> entity = new HttpEntity<String>(requestXmlString, createHeaders());
         ResponseEntity<String> r = restTemplate.postForEntity(url, entity, String.class);
-        logger.info("status={}", r.getStatusCode());
-        logger.info("statusCodeValue={}", r.getStatusCodeValue());
-        logger.info(r.getBody());
+        logger.trace("status={}", r.getStatusCode());
+        logger.trace("statusCodeValue={}", r.getStatusCodeValue());
+        logger.trace(r.getBody());
         return r.getBody();
     }
 
@@ -175,7 +175,7 @@ public class SiriConsumeServiceImpl implements SiriConsumeService {
         //ResponseEntity<String> r = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
         ResponseEntity<String> r = restTemplate.postForEntity(url, entity, String.class);
         logger.info("status={}", r.getStatusCode());
-        logger.info("statusCodeValue={}", r.getStatusCodeValue());
+        logger.trace("statusCodeValue={}", r.getStatusCodeValue());
         return r.getBody();
     }
 
