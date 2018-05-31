@@ -44,15 +44,16 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
  * 
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "StopMonitoringDeliveryStructure", propOrder = {
-    "monitoringRef",
-    "monitoredStopVisit",
-    "monitoredStopVisitCancellation",
-    "stopLineNotice",
-    "stopLineNoticeCancellation",
-    "note",
-    "extensions"
-})
+@XmlType(name = "StopMonitoringDeliveryStructure"
+//        , propOrder = {
+//    "monitoringRef",
+//    "monitoredStopVisit",
+//    "monitoredStopVisitCancellation",
+//    "stopLineNotice",
+//    "stopLineNoticeCancellation",
+//    "note",
+//    "extensions"}
+    )
 public class StopMonitoringDeliveryStructure
     extends AbstractServiceDeliveryStructure
 {

@@ -1,5 +1,6 @@
 package org.hasadna.bus.controller;
 
+import org.hasadna.bus.entity.GetStopMonitoringServiceResponse;
 import org.hasadna.bus.service.SiriConsumeService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,6 +9,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+
+import javax.xml.soap.SOAPException;
+import javax.xml.soap.SOAPMessage;
 
 @RestController
 @RequestMapping("/data")
@@ -54,11 +58,20 @@ public class SiriController {
         return result;
     }
 
+    @RequestMapping(value="/soap/oneStop/{stopCode}/{lineRef}/{previewInterval}", method={RequestMethod.GET}, produces = "application/xml")
+    public GetStopMonitoringServiceResponse retrieveSiriDataOneStopAndLineRefAndPreviewIntervalSoap(@PathVariable String stopCode, @PathVariable String lineRef, @PathVariable String previewInterval) {
+        logger.info("before requesting Siri: stopCode={}, lineRef={}, previewInterval={}", stopCode, lineRef, previewInterval);
+        GetStopMonitoringServiceResponse result = siriConsumeService.retrieveSiri(stopCode, previewInterval, lineRef,1000);
+        logger.info("after requesting Siri: stopCode={}, lineRef={}, previewInterval={}", stopCode, lineRef, previewInterval);
+        logger.info("result:responseTimestamp={}",result.getAnswer().getResponseTimestamp());
+        return result;
+    }
+
 
     @RequestMapping(value="/current/{linePublishedName}", method={RequestMethod.GET}, produces = "application/xml")
     public String retrieveCurrentSiriDataForLineByPublishedName(@PathVariable String linePublishedName) {
         logger.info("before requesting Siri: linePublishedName={}", linePublishedName);
-        String result = "";// siriConsumeService.retrieveSpecificLineAndStop(stopCode, previewInterval, lineRef,1000);
+        String result = "123";// siriConsumeService.retrieveSpecificLineAndStop(stopCode, previewInterval, lineRef,1000);
         //logger.info("after requesting Siri: stopCode={}, lineRef={}, previewInterval={}", stopCode, lineRef, previewInterval);
         logger.info(result);
         return result;
@@ -68,5 +81,6 @@ public class SiriController {
 //    public String post(HttpServletRequest httpServletRequest) {
 //        return siriConsumeService.postGeneric(httpServletRequest).getBody();
 //    }
+
 
 }

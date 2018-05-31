@@ -1,15 +1,24 @@
 package org.hasadna.bus.service;
 
+import org.hasadna.bus.entity.GetStopMonitoringServiceResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBElement;
+import javax.xml.bind.Unmarshaller;
+import javax.xml.soap.SOAPMessage;
+import javax.xml.transform.stream.StreamSource;
+import java.io.StringReader;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 @Component
+@Profile("production")
 public class SiriConsumeServiceImpl implements SiriConsumeService {
 
     protected final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -169,11 +178,27 @@ public class SiriConsumeServiceImpl implements SiriConsumeService {
         return r.getBody();
     }
 
-//    @Override
-//    public ResponseEntity<String> postGeneric(HttpServletRequest request) {
-//        RestTemplate restTemplate = new RestTemplate();
-//        return restTemplate.postForEntity(SIRI_SERVICES_URL, request, String.class);
-//    }
+    @Override
+    public GetStopMonitoringServiceResponse retrieveSiri(String stopCode, String previewInterval, String lineRef, int maxStopVisits) {
+        try {
+            logger.info("retrieveSiri");
+            String content = retrieveSpecificLineAndStop(stopCode, previewInterval, lineRef, maxStopVisits);
+
+            JAXBContext jaxbContext = JAXBContext.newInstance(GetStopMonitoringServiceResponse.class);
+            Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
+            StreamSource streamSource = new StreamSource(new StringReader(content));
+            JAXBElement<GetStopMonitoringServiceResponse> je = jaxbUnmarshaller.unmarshal(streamSource, GetStopMonitoringServiceResponse.class);
+
+            GetStopMonitoringServiceResponse response = (GetStopMonitoringServiceResponse)je.getValue();
+            return response;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
 
     private HttpHeaders createHeaders() {
         HttpHeaders headers = new HttpHeaders();
