@@ -224,6 +224,7 @@ public class SiriConsumeServiceImpl implements SiriConsumeService {
 
             GetStopMonitoringServiceResponse response = (GetStopMonitoringServiceResponse)je.getValue();
 
+            response.setXmlContent(content);
             sw2.stop();
             logger.info("unmarshal to POJO: {} ms", sw2.getTotalTimeMillis());
 
