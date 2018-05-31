@@ -161,6 +161,7 @@ public class SiriConsumeServiceImpl implements SiriConsumeService {
         ResponseEntity<String> r = restTemplate.postForEntity(url, entity, String.class);
         logger.info("status={}", r.getStatusCode());
         logger.info("statusCodeValue={}", r.getStatusCodeValue());
+        logger.info(r.getBody());
         return r.getBody();
     }
 
