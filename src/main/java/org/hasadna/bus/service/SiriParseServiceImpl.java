@@ -40,20 +40,21 @@ public class SiriParseServiceImpl implements SiriParseService {
                 visit.getMonitoredVehicleJourney().getDestinationRef();
                 String licensePlate = visit.getMonitoredVehicleJourney().getVehicleRef().getValue();
                 Date recordedAt = visit.getRecordedAtTime();
-
-                String rep = stringRepresentation(lineRef, lineName, recordedAt, expectedArrivalTime, licensePlate, lon, lat);
+                Date departureTime = visit.getMonitoredVehicleJourney().getOriginAimedDepartureTime();
+                String rep = stringRepresentation(lineRef, lineName, recordedAt, expectedArrivalTime, licensePlate, lon, lat, departureTime);
                 s = s + rep + "\n";
             }
         }
         return s;
     }
 
-    private String stringRepresentation(String lineRef, String lineName, Date recordedAt, Date expectedArrivalTime, String licensePlate, BigDecimal lon, BigDecimal lat) {
-        String s = MessageFormat.format("line {0} vehicle {1} will arrive at {2} ({3}:({4},{5})",
+    private String stringRepresentation(String lineRef, String lineName, Date recordedAt, Date expectedArrivalTime, String licensePlate, BigDecimal lon, BigDecimal lat, Date departureTime) {
+        String s = MessageFormat.format("line {0} vehicle {1} will arrive at {2} [{3}:({4},{5}] departed {6}",
                 lineName, licensePlate,
                 formatTime(expectedArrivalTime),
                 formatTime(recordedAt),
-                lon.toString(), lat.toString()
+                lon.toString(), lat.toString(),
+                formatTimeHHMM(departureTime)
                 );
         return s ;
     }
@@ -68,4 +69,9 @@ public class SiriParseServiceImpl implements SiriParseService {
         String dateTime = formatDate(date);
         return dateTime.split("T")[1];
     }
+    private String formatTimeHHMM(Date date) {
+        String dateTime = formatDate(date);
+        return dateTime.split("T")[1].substring(0,5);
+    }
+
 }
