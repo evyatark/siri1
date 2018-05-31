@@ -1,9 +1,4 @@
-package org.hasadna.bus.Service;
-
-import org.springframework.http.ResponseEntity;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+package org.hasadna.bus.service;
 
 public interface SiriConsumeService {
     String retrieveFromSiri(String request);

@@ -1,6 +1,6 @@
 package org.hasadna.bus.controller;
 
-import org.hasadna.bus.Service.SiriConsumeService;
+import org.hasadna.bus.service.SiriConsumeService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
