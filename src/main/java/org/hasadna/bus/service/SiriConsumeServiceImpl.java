@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StopWatch;
 import org.springframework.web.client.RestTemplate;
 
 import javax.xml.bind.JAXBContext;
@@ -158,7 +159,16 @@ public class SiriConsumeServiceImpl implements SiriConsumeService {
         requestXmlString = requestXmlString.replaceAll("__START1__", start1).replaceAll("__START2__", start2).replaceAll("__START3__", start3);
 
         HttpEntity<String> entity = new HttpEntity<String>(requestXmlString, createHeaders());
+
+        // measure time
+        StopWatch sw = new StopWatch(Thread.currentThread().getName());
+        sw.start();
+
         ResponseEntity<String> r = restTemplate.postForEntity(url, entity, String.class);
+
+        sw.stop();
+        logger.info("network to MOT server: {} ms", sw.getTotalTimeMillis());
+
         logger.trace("status={}", r.getStatusCode());
         logger.trace("statusCodeValue={}", r.getStatusCodeValue());
         logger.trace(r.getBody());
