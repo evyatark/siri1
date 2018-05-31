@@ -93,7 +93,7 @@ public class SiriConsumeServiceImpl implements SiriConsumeService {
         HttpEntity<String> entity = new HttpEntity<String>(requestXmlString, createHeaders());
         ResponseEntity<String> r = restTemplate.postForEntity(url, entity, String.class);
         logger.info("status={}", r.getStatusCode());
-        logger.info("statusCodeValue={}", r.getStatusCodeValue());
+        logger.trace("statusCodeValue={}", r.getStatusCodeValue());
         return r.getBody();
     }
 
@@ -194,11 +194,15 @@ public class SiriConsumeServiceImpl implements SiriConsumeService {
             if (content.endsWith(suffix)) {
                 content = content.substring(0,content.length()-suffix.length());
             }
-            logger.info(content);
+            logger.trace(content);
 
             //unmarshall XML to object
-            JAXBContext jaxbContext = JAXBContext.newInstance(GetStopMonitoringServiceResponse.class);
-            Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
+            Unmarshaller jaxbUnmarshaller = localUnmarshaller.get();
+            if (jaxbUnmarshaller == null) {
+                JAXBContext jaxbContext = JAXBContext.newInstance(GetStopMonitoringServiceResponse.class);
+                jaxbUnmarshaller = jaxbContext.createUnmarshaller();
+                localUnmarshaller.set(jaxbUnmarshaller);
+            }
             StreamSource streamSource = new StreamSource(new StringReader(content));
             JAXBElement<GetStopMonitoringServiceResponse> je = jaxbUnmarshaller.unmarshal(streamSource, GetStopMonitoringServiceResponse.class);
 
@@ -226,4 +230,15 @@ public class SiriConsumeServiceImpl implements SiriConsumeService {
     private String generateTimestamp(LocalDateTime ldt) {
         return ldt.format(DateTimeFormatter.ISO_DATE_TIME);
     }
+
+    ThreadLocal<Unmarshaller> localUnmarshaller = ThreadLocal.withInitial(() -> {
+        try {
+            JAXBContext jaxbContext = JAXBContext.newInstance(GetStopMonitoringServiceResponse.class);
+            Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
+            return jaxbUnmarshaller;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    });
 }
