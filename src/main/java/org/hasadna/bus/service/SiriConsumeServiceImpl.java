@@ -192,9 +192,15 @@ public class SiriConsumeServiceImpl implements SiriConsumeService {
     @Override
     public GetStopMonitoringServiceResponse retrieveSiri(String stopCode, String previewInterval, String lineRef, int maxStopVisits) {
         try {
+            StopWatch sw1 = new StopWatch(Thread.currentThread().getName());
+            sw1.start();
             logger.info("retrieveSiri");
             String content = retrieveSpecificLineAndStop(stopCode, previewInterval, lineRef, maxStopVisits);
+            sw1.stop();
+            logger.info("retrieve XML String: {} ms", sw1.getTotalTimeMillis());
 
+            StopWatch sw2 = new StopWatch(Thread.currentThread().getName());
+            sw2.start();
             // remove soap envelope (ugly)
             final String prefix = "<?xml version='1.0' encoding='UTF-8'?><S:Envelope xmlns:S=\"http://schemas.xmlsoap.org/soap/envelope/\"><S:Body>";
             final String suffix = "</S:Body></S:Envelope>";
@@ -217,6 +223,10 @@ public class SiriConsumeServiceImpl implements SiriConsumeService {
             JAXBElement<GetStopMonitoringServiceResponse> je = jaxbUnmarshaller.unmarshal(streamSource, GetStopMonitoringServiceResponse.class);
 
             GetStopMonitoringServiceResponse response = (GetStopMonitoringServiceResponse)je.getValue();
+
+            sw2.stop();
+            logger.info("unmarshal to POJO: {} ms", sw2.getTotalTimeMillis());
+
             return response;
 
         } catch (Exception e) {
