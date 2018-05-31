@@ -38,7 +38,12 @@ public class SiriParseServiceImpl implements SiriParseService {
                 }
                 String lineName = visit.getMonitoredVehicleJourney().getPublishedLineName().getValue();
                 visit.getMonitoredVehicleJourney().getDestinationRef();
+                if (visit.getMonitoredVehicleJourney().getVehicleRef() == null) {
+                    //logger.warn("null vehicleRef");
+                    continue;
+                }
                 String licensePlate = visit.getMonitoredVehicleJourney().getVehicleRef().getValue();
+
                 Date recordedAt = visit.getRecordedAtTime();
                 Date departureTime = visit.getMonitoredVehicleJourney().getOriginAimedDepartureTime();
                 String rep = stringRepresentation(lineRef, lineName, recordedAt, expectedArrivalTime, licensePlate, lon, lat, departureTime);
