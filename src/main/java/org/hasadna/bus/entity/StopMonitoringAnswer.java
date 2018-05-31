@@ -82,4 +82,12 @@ public class StopMonitoringAnswer extends AbstractServiceDeliveryStructure {
         this.status = status;
     }
 
+
+    public List<StopMonitoringDeliveryStructure> getStopMonitoringDelivery() {
+        return stopMonitoringDelivery;
+    }
+
+    public void setStopMonitoringDelivery(List<StopMonitoringDeliveryStructure> stopMonitoringDelivery) {
+        this.stopMonitoringDelivery = stopMonitoringDelivery;
+    }
 }

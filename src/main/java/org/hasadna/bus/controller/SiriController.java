@@ -2,6 +2,7 @@ package org.hasadna.bus.controller;
 
 import org.hasadna.bus.entity.GetStopMonitoringServiceResponse;
 import org.hasadna.bus.service.SiriConsumeService;
+import org.hasadna.bus.service.SiriParseService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +22,9 @@ public class SiriController {
 
     @Autowired
     SiriConsumeService siriConsumeService;
+
+    @Autowired
+    SiriParseService siriParseService ;
 
 	@RequestMapping(value="/sample/{dummy}", method={RequestMethod.GET}, produces = "application/xml")
     public String retrieveSiriData(@PathVariable String dummy) {
@@ -64,6 +68,8 @@ public class SiriController {
         GetStopMonitoringServiceResponse result = siriConsumeService.retrieveSiri(stopCode, previewInterval, lineRef,1000);
         logger.info("after requesting Siri: stopCode={}, lineRef={}, previewInterval={}", stopCode, lineRef, previewInterval);
         logger.info("result:responseTimestamp={}",result.getAnswer().getResponseTimestamp());
+        String summary = siriParseService.parseShortSummary(result);
+        logger.info(summary);
         return result;
     }
 
