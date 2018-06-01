@@ -11,12 +11,14 @@ import org.springframework.web.client.RestTemplate;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
+import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.soap.SOAPMessage;
 import javax.xml.transform.stream.StreamSource;
 import java.io.StringReader;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.stream.IntStream;
 
 @Component
 @Profile("production")
@@ -98,11 +100,24 @@ public class SiriConsumeServiceImpl implements SiriConsumeService {
         return r.getBody();
     }
 
-// lineRef 19740 is 947
-    // localhost:9000/data/oneStop/20594/7023/PT4H - 480 Jer-TA
-    @Override
-    public String retrieveSpecificLineAndStop(String stopCode, String previewInterval, String lineRef, int maxStopVisits) {
-        final String oneStopRequestXml = "<SOAP-ENV:Envelope xmlns:SOAP-ENV=\"http://schemas.xmlsoap.org/soap/envelope/\"\n" +
+    private String generateStopMonitoringRequestTemplate(int minutesFromNow) {
+        String template =
+                "                <siri:StopMonitoringRequest version=\"IL2.7\" xsi:type=\"siri:StopMonitoringRequestStructure\">\n" +
+                "                    <siri:RequestTimestamp>__TIMESTAMP__</siri:RequestTimestamp>\n" +
+                "                    <siri:MessageIdentifier xsi:type=\"siri:MessageQualifierStructure\"></siri:MessageIdentifier>\n" +
+                "                    <siri:PreviewInterval>__PREVIEW_INTERVAL__</siri:PreviewInterval>\n" +
+                "                    <siri:StartTime>__START__</siri:StartTime>\n" +
+                "                    <siri:LineRef>__LINE_REF__</siri:LineRef>\n" +
+                "                    <siri:MonitoringRef xsi:type=\"siri:MonitoringRefStructure\">__STOP_CODE__</siri:MonitoringRef>\n" +
+                "                    <siri:MaximumStopVisits>__MAX_STOP_VISITS__</siri:MaximumStopVisits>\n" +
+                "                </siri:StopMonitoringRequest>\n" ;
+
+        return template.replace("__START__", generateTimestamp( LocalDateTime.now().plusMinutes(minutesFromNow) ));
+    }
+
+    private String generateStopMonitoringServiceRequestTemplate(int numberOfIntervals) {
+        String template = "" +
+                "<SOAP-ENV:Envelope xmlns:SOAP-ENV=\"http://schemas.xmlsoap.org/soap/envelope/\"\n" +
                 "                   xmlns:SOAP-ENC=\"http://schemas.xmlsoap.org/soap/encoding/\" xmlns:acsb=\"http://www.ifopt.org.uk/acsb\"\n" +
                 "                   xmlns:datex2=\"http://datex2.eu/schema/1_0/1_0\" xmlns:ifopt=\"http://www.ifopt.org.uk/ifopt\"\n" +
                 "                   xmlns:siri=\"http://www.siri.org.uk/siri\" xmlns:siriWS=\"http://new.webservice.namespace\"\n" +
@@ -115,55 +130,41 @@ public class SiriConsumeServiceImpl implements SiriConsumeService {
                 "                <siri:RequestTimestamp>__TIMESTAMP__</siri:RequestTimestamp>\n" +
                 "                <siri:RequestorRef xsi:type=\"siri:ParticipantRefStructure\">ML909091</siri:RequestorRef>\n" +
                 "                <siri:MessageIdentifier xsi:type=\"siri:MessageQualifierStructure\">0100700:1351669188:4684</siri:MessageIdentifier>\n" +
-                "                <siri:StopMonitoringRequest version=\"IL2.7\" xsi:type=\"siri:StopMonitoringRequestStructure\">\n" +
-                "                    <siri:RequestTimestamp>__TIMESTAMP__</siri:RequestTimestamp>\n" +
-                "                    <siri:MessageIdentifier xsi:type=\"siri:MessageQualifierStructure\"></siri:MessageIdentifier>\n" +
-                "                    <siri:PreviewInterval>__PREVIEW_INTERVAL__</siri:PreviewInterval>\n" +
-                "                    <siri:StartTime>__START1__</siri:StartTime>\n" +
-                "                    <siri:LineRef>__LINE_REF__</siri:LineRef>\n" +
-                "                    <siri:MonitoringRef xsi:type=\"siri:MonitoringRefStructure\">__STOP_CODE__</siri:MonitoringRef>\n" +
-                "                    <siri:MaximumStopVisits>__MAX_STOP_VISITS__</siri:MaximumStopVisits>\n" +
-                "                </siri:StopMonitoringRequest>\n" +
-                "                <siri:StopMonitoringRequest version=\"IL2.7\" xsi:type=\"siri:StopMonitoringRequestStructure\">\n" +
-                "                    <siri:RequestTimestamp>__TIMESTAMP__</siri:RequestTimestamp>\n" +
-                "                    <siri:MessageIdentifier xsi:type=\"siri:MessageQualifierStructure\"></siri:MessageIdentifier>\n" +
-                "                    <siri:PreviewInterval>__PREVIEW_INTERVAL__</siri:PreviewInterval>\n" +
-                "                    <siri:StartTime>__START2__</siri:StartTime>\n" +
-                "                    <siri:LineRef>__LINE_REF__</siri:LineRef>\n" +
-                "                    <siri:MonitoringRef xsi:type=\"siri:MonitoringRefStructure\">__STOP_CODE__</siri:MonitoringRef>\n" +
-                "                    <siri:MaximumStopVisits>__MAX_STOP_VISITS__</siri:MaximumStopVisits>\n" +
-                "                </siri:StopMonitoringRequest>\n" +
-                "                <siri:StopMonitoringRequest version=\"IL2.7\" xsi:type=\"siri:StopMonitoringRequestStructure\">\n" +
-                "                    <siri:RequestTimestamp>__TIMESTAMP__</siri:RequestTimestamp>\n" +
-                "                    <siri:MessageIdentifier xsi:type=\"siri:MessageQualifierStructure\"></siri:MessageIdentifier>\n" +
-                "                    <siri:PreviewInterval>__PREVIEW_INTERVAL__</siri:PreviewInterval>\n" +
-                "                    <siri:StartTime>__START3__</siri:StartTime>\n" +
-                "                    <siri:LineRef>__LINE_REF__</siri:LineRef>\n" +
-                "                    <siri:MonitoringRef xsi:type=\"siri:MonitoringRefStructure\">__STOP_CODE__</siri:MonitoringRef>\n" +
-                "                    <siri:MaximumStopVisits>__MAX_STOP_VISITS__</siri:MaximumStopVisits>\n" +
-                "                </siri:StopMonitoringRequest>\n" +
+                "__REQUESTS__" +
                 "            </Request>\n" +
                 "        </siriWS:GetStopMonitoringService>\n" +
                 "    </SOAP-ENV:Body>\n" +
                 "</SOAP-ENV:Envelope>\n" ;
-        RestTemplate restTemplate = new RestTemplate();
-        String url = SIRI_SERVICES_URL;
-        String requestXmlString = oneStopRequestXml.replaceAll("__TIMESTAMP__", generateTimestamp())
+        String s = "" ;
+        for (int i = 0 ; i < numberOfIntervals ; i = i + 5) {   // intervals of 5 minutes
+            s = s + generateStopMonitoringRequestTemplate(i);
+        }
+        return template.replace("__REQUESTS__", s);
+
+    }
+// lineRef 19740 is 947
+    // localhost:9000/data/oneStop/20594/7023/PT4H - 480 Jer-TA
+    private String buildServiceRequest(String stopCode, String previewInterval, String lineRef, int maxStopVisits) {
+        final String oneStopServiceRequestXml = generateStopMonitoringServiceRequestTemplate(8);    // 8 intervals of 5 minutes
+        String requestXmlString = oneStopServiceRequestXml.replaceAll("__TIMESTAMP__", generateTimestamp())
                 .replaceAll("__MAX_STOP_VISITS__", Integer.toString(maxStopVisits))
                 .replaceAll("__PREVIEW_INTERVAL__", previewInterval)
                 .replaceAll("__LINE_REF__", lineRef)
                 .replaceAll("__STOP_CODE__", stopCode);
-        String start1 = generateTimestamp( LocalDateTime.now() ) ;
-        String start2 = generateTimestamp( LocalDateTime.now().plusMinutes(15) );
-        String start3 = generateTimestamp( LocalDateTime.now().plusMinutes(30) );
-        requestXmlString = requestXmlString.replaceAll("__START1__", start1).replaceAll("__START2__", start2).replaceAll("__START3__", start3);
+        return  requestXmlString;
+    }
 
+    @Override
+    public String retrieveSpecificLineAndStop(String stopCode, String previewInterval, String lineRef, int maxStopVisits) {
+        String url = SIRI_SERVICES_URL;
+        String requestXmlString = buildServiceRequest(stopCode, previewInterval, lineRef, maxStopVisits);
         HttpEntity<String> entity = new HttpEntity<String>(requestXmlString, createHeaders());
 
         // measure time
         StopWatch sw = new StopWatch(Thread.currentThread().getName());
         sw.start();
 
+        RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<String> r = restTemplate.postForEntity(url, entity, String.class);
 
         sw.stop();
@@ -189,52 +190,62 @@ public class SiriConsumeServiceImpl implements SiriConsumeService {
         return r.getBody();
     }
 
-    @Override
-    public GetStopMonitoringServiceResponse retrieveSiri(String stopCode, String previewInterval, String lineRef, int maxStopVisits) {
+    private String removeSoapEnvelope(String content) {
+        // remove soap envelope (ugly)
+        final String prefix = "<?xml version='1.0' encoding='UTF-8'?><S:Envelope xmlns:S=\"http://schemas.xmlsoap.org/soap/envelope/\"><S:Body>";
+        final String suffix = "</S:Body></S:Envelope>";
+        if (content.startsWith(prefix)) {
+            content = content.substring(prefix.length());
+        }
+        if (content.endsWith(suffix)) {
+            content = content.substring(0,content.length()-suffix.length());
+        }
+        return content;
+    }
+
+    private GetStopMonitoringServiceResponse unmarshalXml(String xml) {
         try {
-            StopWatch sw1 = new StopWatch(Thread.currentThread().getName());
-            sw1.start();
-            logger.info("retrieveSiri");
-            String content = retrieveSpecificLineAndStop(stopCode, previewInterval, lineRef, maxStopVisits);
-            sw1.stop();
-            logger.info("retrieve XML String: {} ms", sw1.getTotalTimeMillis());
-
-            StopWatch sw2 = new StopWatch(Thread.currentThread().getName());
-            sw2.start();
-            // remove soap envelope (ugly)
-            final String prefix = "<?xml version='1.0' encoding='UTF-8'?><S:Envelope xmlns:S=\"http://schemas.xmlsoap.org/soap/envelope/\"><S:Body>";
-            final String suffix = "</S:Body></S:Envelope>";
-            if (content.startsWith(prefix)) {
-                content = content.substring(prefix.length());
-            }
-            if (content.endsWith(suffix)) {
-                content = content.substring(0,content.length()-suffix.length());
-            }
-            logger.trace(content);
-
-            //unmarshall XML to object
             Unmarshaller jaxbUnmarshaller = localUnmarshaller.get();
             if (jaxbUnmarshaller == null) {
                 JAXBContext jaxbContext = JAXBContext.newInstance(GetStopMonitoringServiceResponse.class);
                 jaxbUnmarshaller = jaxbContext.createUnmarshaller();
                 localUnmarshaller.set(jaxbUnmarshaller);
             }
-            StreamSource streamSource = new StreamSource(new StringReader(content));
+            StreamSource streamSource = new StreamSource(new StringReader(xml));
             JAXBElement<GetStopMonitoringServiceResponse> je = jaxbUnmarshaller.unmarshal(streamSource, GetStopMonitoringServiceResponse.class);
 
-            GetStopMonitoringServiceResponse response = (GetStopMonitoringServiceResponse)je.getValue();
-
-            response.setXmlContent(content);
-            sw2.stop();
-            logger.info("unmarshal to POJO: {} ms", sw2.getTotalTimeMillis());
-
+            GetStopMonitoringServiceResponse response = (GetStopMonitoringServiceResponse) je.getValue();
+            response.setXmlContent(xml);
             return response;
-
-        } catch (Exception e) {
-            e.printStackTrace();
         }
+        catch (JAXBException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 
-        return null;
+    @Override
+    public GetStopMonitoringServiceResponse retrieveSiri(String stopCode, String previewInterval, String lineRef, int maxStopVisits) {
+        StopWatch sw1 = new StopWatch(Thread.currentThread().getName());
+        sw1.start();
+        logger.info("retrieveSiri");
+        String content = retrieveSpecificLineAndStop(stopCode, previewInterval, lineRef, maxStopVisits);
+        sw1.stop();
+        logger.info("retrieve XML String: {} ms", sw1.getTotalTimeMillis());
+
+        StopWatch sw2 = new StopWatch(Thread.currentThread().getName());
+        sw2.start();
+
+        content = removeSoapEnvelope(content);
+        logger.trace(content);
+
+        //unmarshall XML to object
+        GetStopMonitoringServiceResponse response = unmarshalXml(content);
+
+        sw2.stop();
+        logger.info("unmarshal to POJO: {} ms", sw2.getTotalTimeMillis());
+
+        return response;
     }
 
 
