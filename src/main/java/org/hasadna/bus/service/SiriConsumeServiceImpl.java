@@ -144,6 +144,8 @@ public class SiriConsumeServiceImpl implements SiriConsumeService {
     }
 // lineRef 19740 is 947
     // localhost:9000/data/oneStop/20594/7023/PT4H - 480 Jer-TA
+//line 420 from BS to Jer - route_id 15531 (15532?), last stop: stopId=11734, stopCode=6109
+    // localhost:8080/data/soap/oneStop/6109/15531/PT2D
     private String buildServiceRequest(String stopCode, String previewInterval, String lineRef, int maxStopVisits) {
         final String oneStopServiceRequestXml = generateStopMonitoringServiceRequestTemplate(12);    // 8 intervals of 5 minutes
         String requestXmlString = oneStopServiceRequestXml.replaceAll("__TIMESTAMP__", generateTimestamp())

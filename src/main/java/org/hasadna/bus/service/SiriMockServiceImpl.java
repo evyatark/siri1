@@ -50,11 +50,18 @@ public class SiriMockServiceImpl implements SiriConsumeService {
     }
 
 // lineRef 19740 is 947
-    // localhost:9000/data/oneStop/20594/7023/PT4H - 480 Jer-TA
+
     @Override
     public String retrieveSpecificLineAndStop(String stopCode, String previewInterval, String lineRef, int maxStopVisits) {
-        logger.info("reading 480-05.xml");
-        return readFromFile("480-05");
+        if (lineRef.equals("7023")) {
+            logger.info("reading 480-05.xml");
+            return readFromFile("480-05");  // localhost:8080/data/oneStop/20594/7023/PT4H - 480 Jer-TA
+        }
+        else if (lineRef.equals("7453")) {
+            logger.info("reading 394-01.xml");
+            return readFromFile("394-01");  // localhost:8080/data/soap/oneStop/10331/7453/PT24H - 394 Eilat-TA
+        }
+        return readFromFile("480-01");
     }
 
     private String readFromFile(String name) {

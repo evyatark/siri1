@@ -17,9 +17,9 @@ import java.util.*;
 public class SiriParseServiceImpl implements SiriParseService {
     @Override
     public String parseShortSummary(GetStopMonitoringServiceResponse sm) {
-//        if (!sm.getAnswer().getStatus()) {
-//            return "---";
-//        }
+        if (sm.getAnswer().isStatus() == null) {
+            return "---";
+        }
         SortedMap<String, MonitoredStopVisitStructure> visits = new TreeMap<>();
         Set<String> licensePlates = new HashSet<>();
         for (StopMonitoringDeliveryStructure smd : sm.getAnswer().getStopMonitoringDelivery()) {
