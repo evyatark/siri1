@@ -145,7 +145,7 @@ public class SiriConsumeServiceImpl implements SiriConsumeService {
 // lineRef 19740 is 947
     // localhost:9000/data/oneStop/20594/7023/PT4H - 480 Jer-TA
     private String buildServiceRequest(String stopCode, String previewInterval, String lineRef, int maxStopVisits) {
-        final String oneStopServiceRequestXml = generateStopMonitoringServiceRequestTemplate(8);    // 8 intervals of 5 minutes
+        final String oneStopServiceRequestXml = generateStopMonitoringServiceRequestTemplate(12);    // 8 intervals of 5 minutes
         String requestXmlString = oneStopServiceRequestXml.replaceAll("__TIMESTAMP__", generateTimestamp())
                 .replaceAll("__MAX_STOP_VISITS__", Integer.toString(maxStopVisits))
                 .replaceAll("__PREVIEW_INTERVAL__", previewInterval)
