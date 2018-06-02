@@ -15,7 +15,7 @@ public class ScheduleRetrieval {
     @Autowired
     SiriProcessService siriProcessService;
 
-    @Scheduled(fixedDelay=60000)    // every 60 seconds
+    @Scheduled(fixedDelay=120000)    // every 120 seconds
     public void retrieve_480_Periodically() {
         GetStopMonitoringServiceResponse result = siriConsumeService.retrieveSiri("20594", "PT2H", "7023",1000);
         siriProcessService.process(result); // asynchronous invocation
