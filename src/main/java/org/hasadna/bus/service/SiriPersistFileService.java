@@ -7,11 +7,15 @@ import org.springframework.stereotype.Component;
 @Component
 public class SiriPersistFileService implements SiriPersistService {
 
+    protected final Logger logger = LoggerFactory.getLogger(SiriPersistFileService.class);
+
     // this logger should be defined to a specific file
-    protected final Logger logger = LoggerFactory.getLogger("SiriRealTimeData");
+    protected final Logger fileLogger = LoggerFactory.getLogger("SiriRealTimeData");
 
     @Override
     public void persistShortSummary(String summary) {
-        logger.info(summary);
+        logger.info("persisting...");
+        fileLogger.info(summary);
+        logger.info("          ...Done");
     }
 }

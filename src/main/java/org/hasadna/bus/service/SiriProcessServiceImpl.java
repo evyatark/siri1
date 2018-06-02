@@ -1,12 +1,16 @@
 package org.hasadna.bus.service;
 
 import org.hasadna.bus.entity.GetStopMonitoringServiceResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 @Component
 public class SiriProcessServiceImpl implements SiriProcessService {
+
+    protected final Logger logger = LoggerFactory.getLogger(SiriProcessServiceImpl.class);
 
     @Autowired
     SiriParseService siriParseService ;
@@ -17,6 +21,7 @@ public class SiriProcessServiceImpl implements SiriProcessService {
     @Override
     @Async
     public void process(GetStopMonitoringServiceResponse stopMonitorResult) {
+        logger.info("processing...");
         String summary = siriParseService.parseShortSummary(stopMonitorResult) ;
         // log to file
         siriPersistService.persistShortSummary(summary);
