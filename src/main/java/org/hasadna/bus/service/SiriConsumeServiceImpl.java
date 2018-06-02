@@ -230,10 +230,11 @@ public class SiriConsumeServiceImpl implements SiriConsumeService {
     public GetStopMonitoringServiceResponse retrieveSiri(String stopCode, String previewInterval, String lineRef, int maxStopVisits) {
         StopWatch sw1 = new StopWatch(Thread.currentThread().getName());
         sw1.start();
-        logger.info("retrieveSiri");
+        logger.info("retrieving... {}", lineRef);
         String content = retrieveSpecificLineAndStop(stopCode, previewInterval, lineRef, maxStopVisits);
         sw1.stop();
-        logger.info("retrieve XML String: {} ms", sw1.getTotalTimeMillis());
+        logger.info("retrieving...Done ({} ms)", sw1.getTotalTimeMillis());
+        logger.debug("lineRef={}, stopCode={}, previewInterval={}, response={}", lineRef, stopCode, previewInterval, content);
 
         StopWatch sw2 = new StopWatch(Thread.currentThread().getName());
         sw2.start();
