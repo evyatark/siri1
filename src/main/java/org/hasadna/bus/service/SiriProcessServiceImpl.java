@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
+
 @Component
 public class SiriProcessServiceImpl implements SiriProcessService {
 
@@ -22,8 +24,10 @@ public class SiriProcessServiceImpl implements SiriProcessService {
     @Async
     public void process(GetStopMonitoringServiceResponse stopMonitorResult) {
         logger.info("processing...");
-        String summary = siriParseService.parseShortSummary(stopMonitorResult) ;
+        Optional<String> summary = siriParseService.parseShortSummary(stopMonitorResult) ;
         // log to file
-        siriPersistService.persistShortSummary(summary);
+        summary.ifPresent(s ->
+            siriPersistService.persistShortSummary(s));
+        logger.info("processing...Done.");
     }
 }

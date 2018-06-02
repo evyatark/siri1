@@ -21,7 +21,7 @@ public class SiriParseServiceImpl implements SiriParseService {
     protected final Logger logger = LoggerFactory.getLogger(SiriParseServiceImpl.class);
 
     @Override
-    public String parseShortSummary(GetStopMonitoringServiceResponse sm) {
+    public Optional<String> parseShortSummary(GetStopMonitoringServiceResponse sm) {
         try {
             if (sm.getAnswer().isStatus() != null) {
                 logger.info("answer.isStatus={}", sm.getAnswer().isStatus());
@@ -40,7 +40,7 @@ public class SiriParseServiceImpl implements SiriParseService {
                     }
                     Date departureTime = visit.getMonitoredVehicleJourney().getOriginAimedDepartureTime();
                     licensePlates.add(licensePlate);
-                    visits.put(formatTimeHHMM(departureTime), visit);   // ??? not sorted if there are visits in different days
+                    visits.put(licensePlate + "/" + formatTimeHHMM(departureTime), visit);   // ??? not sorted if there are visits in different days
                 }
             }
             String s = "";
@@ -66,12 +66,17 @@ public class SiriParseServiceImpl implements SiriParseService {
                 String rep = stringRepresentation(lineRef, lineName, recordedAt, expectedArrivalTime, licensePlate, lon, lat, departureTime);
                 s = s + rep + "\n";
             }
-            logger.info("produced summary: {}", s);
-            return s;
+            if (!visits.isEmpty()) {
+                logger.info("produced summary: {}", s);
+                return Optional.of(s);
+            }
+            else {
+                return Optional.empty();
+            }
         }
         catch (Exception ex) {
             logger.error("unhandled exception in parsing", ex);
-            return "---";
+            return Optional.empty();
         }
     }
 

@@ -68,14 +68,7 @@ public class SiriController {
         GetStopMonitoringServiceResponse result = siriConsumeService.retrieveSiri(stopCode, previewInterval, lineRef,1000);
         logger.info("after requesting Siri: stopCode={}, lineRef={}, previewInterval={}", stopCode, lineRef, previewInterval);
         logger.info("result:responseTimestamp={}",result.getAnswer().getResponseTimestamp());
-        String summary = "---\n" ;
-        try {
-            summary = siriParseService.parseShortSummary(result);
-        }
-        catch (Exception ex) {
-            logger.error("exception in parsing {}", result.getXmlContent() , ex);
-
-        }
+        String summary = siriParseService.parseShortSummary(result).orElse("---\n");
         logger.info(summary);
         return result;
     }

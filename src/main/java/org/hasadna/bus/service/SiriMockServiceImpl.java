@@ -54,8 +54,8 @@ public class SiriMockServiceImpl implements SiriConsumeService {
     @Override
     public String retrieveSpecificLineAndStop(String stopCode, String previewInterval, String lineRef, int maxStopVisits) {
         if (lineRef.equals("7023")) {
-            logger.info("reading 480-05.xml");
-            return readFromFile("480-05");  // localhost:8080/data/oneStop/20594/7023/PT4H - 480 Jer-TA
+            logger.info("reading 480-06.xml");
+            return readFromFile("480-06");  // localhost:8080/data/oneStop/20594/7023/PT4H - 480 Jer-TA
         }
         else if (lineRef.equals("7453")) {
             logger.info("reading 394-01.xml");
