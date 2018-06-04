@@ -26,9 +26,35 @@ public class SiriController {
     @Autowired
     SiriParseService siriParseService ;
 
-	@RequestMapping(value="/sample/{dummy}", method={RequestMethod.GET}, produces = "application/xml")
+
+    @RequestMapping(value="/soap/oneStop/{stopCode}/{lineRef}/{previewInterval}", method={RequestMethod.GET}, produces = "application/xml")
+    public GetStopMonitoringServiceResponse retrieveSiriDataOneStopAndLineRefAndPreviewIntervalSoap(@PathVariable String stopCode, @PathVariable String lineRef, @PathVariable String previewInterval) {
+        logger.info("before requesting Siri: stopCode={}, lineRef={}, previewInterval={}", stopCode, lineRef, previewInterval);
+        GetStopMonitoringServiceResponse result = siriConsumeService.retrieveSiri(stopCode, previewInterval, lineRef,1000);
+        logger.info("after requesting Siri: stopCode={}, lineRef={}, previewInterval={}", stopCode, lineRef, previewInterval);
+        logger.info("result:responseTimestamp={}",result.getAnswer().getResponseTimestamp());
+        String summary = siriParseService.parseShortSummary(result).orElse("---\n");
+        logger.info(summary);
+        return result;
+    }
+
+
+    @RequestMapping(value="/current/{linePublishedName}", method={RequestMethod.GET}, produces = "application/xml")
+    public String retrieveCurrentSiriDataForLineByPublishedName(@PathVariable String linePublishedName) {
+        logger.info("before requesting Siri: linePublishedName={}", linePublishedName);
+        String result = "123";// siriConsumeService.retrieveSpecificLineAndStop(stopCode, previewInterval, lineRef,1000);
+        //logger.info("after requesting Siri: stopCode={}, lineRef={}, previewInterval={}", stopCode, lineRef, previewInterval);
+        logger.info(result);
+        return result;
+    }
+
+
+
+
+
+    @RequestMapping(value="/sample/{dummy}", method={RequestMethod.GET}, produces = "application/xml")
     public String retrieveSiriData(@PathVariable String dummy) {
-	    logger.info("before requesting Siri: {}", dummy);
+        logger.info("before requesting Siri: {}", dummy);
         String result = siriConsumeService.retrieveFromSiri(dummy);
         logger.info("after requesting Siri: {}", dummy);
         logger.info(result);
@@ -58,27 +84,6 @@ public class SiriController {
         logger.info("before requesting Siri: stopCode={}, lineRef={}, previewInterval={}", stopCode, lineRef, previewInterval);
         String result = siriConsumeService.retrieveSpecificLineAndStop(stopCode, previewInterval, lineRef,1000);
         logger.info("after requesting Siri: stopCode={}, lineRef={}, previewInterval={}", stopCode, lineRef, previewInterval);
-        logger.info(result);
-        return result;
-    }
-
-    @RequestMapping(value="/soap/oneStop/{stopCode}/{lineRef}/{previewInterval}", method={RequestMethod.GET}, produces = "application/xml")
-    public GetStopMonitoringServiceResponse retrieveSiriDataOneStopAndLineRefAndPreviewIntervalSoap(@PathVariable String stopCode, @PathVariable String lineRef, @PathVariable String previewInterval) {
-        logger.info("before requesting Siri: stopCode={}, lineRef={}, previewInterval={}", stopCode, lineRef, previewInterval);
-        GetStopMonitoringServiceResponse result = siriConsumeService.retrieveSiri(stopCode, previewInterval, lineRef,1000);
-        logger.info("after requesting Siri: stopCode={}, lineRef={}, previewInterval={}", stopCode, lineRef, previewInterval);
-        logger.info("result:responseTimestamp={}",result.getAnswer().getResponseTimestamp());
-        String summary = siriParseService.parseShortSummary(result).orElse("---\n");
-        logger.info(summary);
-        return result;
-    }
-
-
-    @RequestMapping(value="/current/{linePublishedName}", method={RequestMethod.GET}, produces = "application/xml")
-    public String retrieveCurrentSiriDataForLineByPublishedName(@PathVariable String linePublishedName) {
-        logger.info("before requesting Siri: linePublishedName={}", linePublishedName);
-        String result = "123";// siriConsumeService.retrieveSpecificLineAndStop(stopCode, previewInterval, lineRef,1000);
-        //logger.info("after requesting Siri: stopCode={}, lineRef={}, previewInterval={}", stopCode, lineRef, previewInterval);
         logger.info(result);
         return result;
     }
