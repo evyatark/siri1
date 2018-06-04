@@ -221,6 +221,7 @@ public class SiriConsumeServiceImpl implements SiriConsumeService {
                 "    </SOAP-ENV:Body>\n" +
                 "</SOAP-ENV:Envelope>\n" ;
         String s = "" ;
+        logger.trace("generating {} intervals", numberOfIntervals);
         for (int i = 0 ; i < numberOfIntervals ; i = i + durationOfIntervalInMinutes) {   // intervals of 5 minutes
             s = s + generateStopMonitoringRequestTemplate(i);
         }
