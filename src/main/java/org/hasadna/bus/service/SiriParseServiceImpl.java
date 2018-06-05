@@ -89,7 +89,7 @@ public class SiriParseServiceImpl implements SiriParseService {
 
 
     private String stringRepresentation(String lineRef, String lineName, Date recordedAt, Date expectedArrivalTime, String licensePlate, BigDecimal lon, BigDecimal lat, Date departureTime, String operatorRef, String journeyRef) {
-        String s = MessageFormat.format("line {0} v {1} oad {6} ea {2} [{3}:({4},{5})][{7}{8}{9}]",
+        String s = MessageFormat.format("line {0} v {1} oad {6} ea {2} [{3}:({4},{5})][{7},{8},{9}]",
                 lineName, licensePlate,
                 formatTime(expectedArrivalTime),
                 formatTime(recordedAt),
