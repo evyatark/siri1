@@ -25,7 +25,7 @@ public class SiriControllerTest {
         GetStopMonitoringServiceResponse response =
             siriController.retrieveSiriDataOneStopAndLineRefAndPreviewIntervalSoap("10331",
                                                                                     "7023",
-                                                                                "PT24H");
+                                                                                "PT24H", 7);
         Assertions.assertThat(response.getAnswer().isStatus()).isNotNull().isTrue();
         Assertions.assertThat(response.getAnswer().getStopMonitoringDelivery().size()).isEqualTo(3);
         MonitoredStopVisitStructure msvs = response.getAnswer().getStopMonitoringDelivery().get(0).getMonitoredStopVisit().get(0);
@@ -46,7 +46,7 @@ public class SiriControllerTest {
         GetStopMonitoringServiceResponse response =
                 siriController.retrieveSiriDataOneStopAndLineRefAndPreviewIntervalSoap("20594",
                                                                                         "7453",
-                                                                                        "PT2H");
+                                                                                        "PT2H",7);
         // when no real-time data, only planned, the answer.status is Null
         Assertions.assertThat(response.getAnswer().getStatus()).isNull();
         // However, we have answer.responseTimestamp
