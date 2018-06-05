@@ -194,6 +194,9 @@ public class SiriConsumeServiceImpl implements SiriConsumeService {
                         "                    <siri:StartTime>__START__</siri:StartTime>\n" +
                         "                    <siri:LineRef>__LINE_REF__</siri:LineRef>\n" +
                         " <siri:MinimumStopVisitsPerLine>4</siri:MinimumStopVisitsPerLine>" +
+                        "<siri:MaximumNumberOfCalls>\n" +
+                        "\t\t\t\t<siri:Onwards>10</siri:Onwards>\n" +
+                        "\t\t\t</siri:MaximumNumberOfCalls>"+
                         "                    <siri:MonitoringRef xsi:type=\"siri:MonitoringRefStructure\">__STOP_CODE__</siri:MonitoringRef>\n" +
                         "                    <siri:MaximumStopVisits>__MAX_STOP_VISITS__</siri:MaximumStopVisits>\n" +
                         "                </siri:StopMonitoringRequest>\n" ;
