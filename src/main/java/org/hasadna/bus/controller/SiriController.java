@@ -52,14 +52,14 @@ public class SiriController {
 
 
 
-    @RequestMapping(value="/sample/{dummy}", method={RequestMethod.GET}, produces = "application/xml")
-    public String retrieveSiriData(@PathVariable String dummy) {
-        logger.info("before requesting Siri: {}", dummy);
-        String result = siriConsumeService.retrieveFromSiri(dummy);
-        logger.info("after requesting Siri: {}", dummy);
-        logger.info(result);
-        return result;
-    }
+//    @RequestMapping(value="/sample/{dummy}", method={RequestMethod.GET}, produces = "application/xml")
+//    public String retrieveSiriData(@PathVariable String dummy) {
+//        logger.info("before requesting Siri: {}", dummy);
+//        String result = siriConsumeService.retrieveFromSiri(dummy);
+//        logger.info("after requesting Siri: {}", dummy);
+//        logger.info(result);
+//        return result;
+//    }
 
     @RequestMapping(value="/oneStop/{stopCode}", method={RequestMethod.GET}, produces = "application/xml")
     public String retrieveSiriDataOneStop(@PathVariable String stopCode) {
@@ -88,10 +88,16 @@ public class SiriController {
         return result;
     }
 
-//    @RequestMapping(value = "/post", method = RequestMethod.POST)
-//    public String post(HttpServletRequest httpServletRequest) {
-//        return siriConsumeService.postGeneric(httpServletRequest).getBody();
-//    }
+    /**
+     * passes the xml as is to Siri
+     * The only replacement is of __TIMESTAMP__
+     * @param xmlBody
+     * @return
+     */
+    @RequestMapping(value = "/post", method = RequestMethod.POST)
+    public String post(String xmlBody) {
+        return siriConsumeService.retrieveFromSiri(xmlBody);
+    }
 
 
 }

@@ -101,6 +101,7 @@ public class SiriConsumeServiceImpl implements SiriConsumeService {
         sw.start();
 
         RestTemplate restTemplate = new RestTemplate();
+        logger.trace(requestXmlString);
         ResponseEntity<String> r = restTemplate.postForEntity(url, entity, String.class);
 
         sw.stop();
@@ -179,6 +180,7 @@ public class SiriConsumeServiceImpl implements SiriConsumeService {
                 .replaceAll("__STOP_CODE__", stopCode);
 
         HttpEntity<String> entity = new HttpEntity<String>(requestXmlString, createHeaders());
+        logger.trace(requestXmlString);
         ResponseEntity<String> r = restTemplate.postForEntity(url, entity, String.class);
         logger.info("status={}", r.getStatusCode());
         logger.trace("statusCodeValue={}", r.getStatusCodeValue());
@@ -252,7 +254,8 @@ public class SiriConsumeServiceImpl implements SiriConsumeService {
         logger.info("timestamp={}", generateTimestamp());
         RestTemplate restTemplate = new RestTemplate();
         String url = SIRI_SERVICES_URL;
-        String requestXmlString = sampleRequestXml.replaceAll("__TIMESTAMP__", generateTimestamp());
+        String requestXmlString = request.replaceAll("__TIMESTAMP__", generateTimestamp());
+        logger.trace(requestXmlString);
         HttpEntity<String> entity = new HttpEntity<String>(requestXmlString, createHeaders());
         //ResponseEntity<String> r = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
         ResponseEntity<String> r = restTemplate.postForEntity(url, entity, String.class);

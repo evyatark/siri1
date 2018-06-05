@@ -11,6 +11,22 @@
         </layout>
     </appender>
 
+    <appender name="FILE-debug" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${DEV_HOME}/debug.log</file>
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <Pattern>[%level][%thread] [%logger][%d{yyyy-MM-dd HH:mm:ss}] %msg%n</Pattern>
+        </encoder>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- rollover daily + zip -->
+            <fileNamePattern>${DEV_HOME}/archived/debug.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>100MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+        </rollingPolicy>
+
+    </appender>
+
     <appender name="FILE-SiriRealTimeData" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${DEV_HOME}/siri_rt_data.log</file>
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
@@ -31,6 +47,9 @@
     <!-- Send logs to both console and file audit -->
     <logger name="SiriRealTimeData" level="info" additivity="false">
         <appender-ref ref="FILE-SiriRealTimeData" />
+    </logger>
+    <logger name="org.hasadna" level="trace" additivity="false">
+        <appender-ref ref="FILE-debug" />
     </logger>
 
     <root level="info">
