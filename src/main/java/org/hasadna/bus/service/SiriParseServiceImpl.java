@@ -44,8 +44,8 @@ public class SiriParseServiceImpl implements SiriParseService {
                 }
             }
             String s = "";
-            String date = formatDate(sm.getAnswer().getResponseTimestamp());
-            s = s + "\n" + date + "\n";
+            String responseTimestamp = formatDate(sm.getAnswer().getResponseTimestamp());
+            s = "";//s + "\n" + date + "\n";
             for (String key : visits.keySet()) {
                 MonitoredStopVisitStructure visit = visits.get(key);
                 String licensePlate = visit.getMonitoredVehicleJourney().getVehicleRef().getValue();
@@ -65,7 +65,7 @@ public class SiriParseServiceImpl implements SiriParseService {
                 Date departureTime = visit.getMonitoredVehicleJourney().getOriginAimedDepartureTime();
                 String operatorRef = visit.getMonitoredVehicleJourney().getOperatorRef().getValue();
                 String journeyRef = visit.getMonitoredVehicleJourney().getFramedVehicleJourneyRef().getDatedVehicleJourneyRef();
-                String rep = stringRepresentation(lineRef, lineName, recordedAt, expectedArrivalTime, licensePlate, lat, lon, departureTime, operatorRef, journeyRef);
+                String rep = stringRepresentation(lineRef, lineName, recordedAt, expectedArrivalTime, licensePlate, lat, lon, departureTime, operatorRef, journeyRef, responseTimestamp);
                 String jsonStrRepresentation = buildJson(lineRef, lineName, recordedAt, expectedArrivalTime, licensePlate, lat, lon, departureTime, operatorRef, journeyRef);
                 s = s + rep + "\n";
             }
@@ -88,14 +88,14 @@ public class SiriParseServiceImpl implements SiriParseService {
     }
 
 
-    private String stringRepresentation(String lineRef, String lineName, Date recordedAt, Date expectedArrivalTime, String licensePlate, BigDecimal lon, BigDecimal lat, Date departureTime, String operatorRef, String journeyRef) {
-        String s = MessageFormat.format("line {0} v {1} oad {6} ea {2} [{3}:({4},{5})][{7},{8},{9}]",
+    private String stringRepresentation(String lineRef, String lineName, Date recordedAt, Date expectedArrivalTime, String licensePlate, BigDecimal lon, BigDecimal lat, Date departureTime, String operatorRef, String journeyRef, String responseTimestamp) {
+        String s = MessageFormat.format("[{10}] [line {0} v {1} oad {6} ea {2}] [{3}:({4},{5})][{7},{8},{9}]",
                 lineName, licensePlate,
                 formatTime(expectedArrivalTime),
                 formatTime(recordedAt),
                 lon.toString(), lat.toString(),
                 formatTimeHHMM(departureTime),
-                operatorRef, lineRef, journeyRef
+                operatorRef, lineRef, journeyRef, responseTimestamp
                 );
         return s ;
     }

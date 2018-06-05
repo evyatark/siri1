@@ -27,10 +27,11 @@
 
     </appender>
 
+    <!-- This file is machine readable -->
     <appender name="FILE-SiriRealTimeData" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${DEV_HOME}/siri_rt_data.log</file>
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-            <Pattern>%d{yyyy-MM-dd HH:mm:ss} - %msg%n</Pattern>
+            <Pattern>%msg%n</Pattern>
         </encoder>
 
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
