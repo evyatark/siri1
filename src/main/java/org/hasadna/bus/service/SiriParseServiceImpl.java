@@ -40,7 +40,7 @@ public class SiriParseServiceImpl implements SiriParseService {
                     }
                     Date departureTime = visit.getMonitoredVehicleJourney().getOriginAimedDepartureTime();
                     licensePlates.add(licensePlate);
-                    visits.put(licensePlate + "/" + formatTimeHHMM(departureTime), visit);   // ??? not sorted if there are visits in different days
+                    visits.put(formatDate(departureTime) + "/" + licensePlate, visit);
                 }
             }
             String s = "";
@@ -79,6 +79,7 @@ public class SiriParseServiceImpl implements SiriParseService {
             return Optional.empty();
         }
     }
+
 
     private String stringRepresentation(String lineRef, String lineName, Date recordedAt, Date expectedArrivalTime, String licensePlate, BigDecimal lon, BigDecimal lat, Date departureTime) {
         String s = MessageFormat.format("line {0} v {1} oad {6} ea {2} [{3}:({4},{5})]",
