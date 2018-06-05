@@ -63,7 +63,10 @@ public class SiriParseServiceImpl implements SiriParseService {
 
                 Date recordedAt = visit.getRecordedAtTime();
                 Date departureTime = visit.getMonitoredVehicleJourney().getOriginAimedDepartureTime();
-                String rep = stringRepresentation(lineRef, lineName, recordedAt, expectedArrivalTime, licensePlate, lat, lon, departureTime);
+                String operatorRef = visit.getMonitoredVehicleJourney().getOperatorRef().getValue();
+                String journeyRef = visit.getMonitoredVehicleJourney().getFramedVehicleJourneyRef().getDatedVehicleJourneyRef();
+                String rep = stringRepresentation(lineRef, lineName, recordedAt, expectedArrivalTime, licensePlate, lat, lon, departureTime, operatorRef, journeyRef);
+                String jsonStrRepresentation = buildJson(lineRef, lineName, recordedAt, expectedArrivalTime, licensePlate, lat, lon, departureTime, operatorRef, journeyRef);
                 s = s + rep + "\n";
             }
             if (!visits.isEmpty()) {
@@ -80,14 +83,19 @@ public class SiriParseServiceImpl implements SiriParseService {
         }
     }
 
+    private String buildJson(String lineRef, String lineName, Date recordedAt, Date expectedArrivalTime, String licensePlate, BigDecimal lat, BigDecimal lon, Date departureTime, String operatorRef, String journeyRef) {
+        return "" ; // temporary
+    }
 
-    private String stringRepresentation(String lineRef, String lineName, Date recordedAt, Date expectedArrivalTime, String licensePlate, BigDecimal lon, BigDecimal lat, Date departureTime) {
-        String s = MessageFormat.format("line {0} v {1} oad {6} ea {2} [{3}:({4},{5})]",
+
+    private String stringRepresentation(String lineRef, String lineName, Date recordedAt, Date expectedArrivalTime, String licensePlate, BigDecimal lon, BigDecimal lat, Date departureTime, String operatorRef, String journeyRef) {
+        String s = MessageFormat.format("line {0} v {1} oad {6} ea {2} [{3}:({4},{5})][{7}{8}{9}]",
                 lineName, licensePlate,
                 formatTime(expectedArrivalTime),
                 formatTime(recordedAt),
                 lon.toString(), lat.toString(),
-                formatTimeHHMM(departureTime)
+                formatTimeHHMM(departureTime),
+                operatorRef, lineRef, journeyRef
                 );
         return s ;
     }
