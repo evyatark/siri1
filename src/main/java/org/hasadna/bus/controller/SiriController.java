@@ -27,10 +27,10 @@ public class SiriController {
     SiriParseService siriParseService ;
 
 
-    @RequestMapping(value="/soap/oneStop/{stopCode}/{lineRef}/{previewInterval}", method={RequestMethod.GET}, produces = "application/xml")
-    public GetStopMonitoringServiceResponse retrieveSiriDataOneStopAndLineRefAndPreviewIntervalSoap(@PathVariable String stopCode, @PathVariable String lineRef, @PathVariable String previewInterval) {
+    @RequestMapping(value="/soap/oneStop/{stopCode}/{lineRef}/{previewInterval}/{maxStopVisits}", method={RequestMethod.GET}, produces = "application/xml")
+    public GetStopMonitoringServiceResponse retrieveSiriDataOneStopAndLineRefAndPreviewIntervalSoap(@PathVariable String stopCode, @PathVariable String lineRef, @PathVariable String previewInterval, @PathVariable int maxStopVisits) {
         logger.info("before requesting Siri: stopCode={}, lineRef={}, previewInterval={}", stopCode, lineRef, previewInterval);
-        GetStopMonitoringServiceResponse result = siriConsumeService.retrieveSiri(stopCode, previewInterval, lineRef,1000);
+        GetStopMonitoringServiceResponse result = siriConsumeService.retrieveSiri(stopCode, previewInterval, lineRef,maxStopVisits);
         logger.info("after requesting Siri: stopCode={}, lineRef={}, previewInterval={}", stopCode, lineRef, previewInterval);
         logger.info("result:responseTimestamp={}",result.getAnswer().getResponseTimestamp());
         String summary = siriParseService.parseShortSummary(result).orElse("---\n");
@@ -79,8 +79,8 @@ public class SiriController {
         return result;
     }
 
-    @RequestMapping(value="/oneStop/{stopCode}/{lineRef}/{previewInterval}", method={RequestMethod.GET}, produces = "application/xml")
-    public String retrieveSiriDataOneStopAndLineRefAndPreviewInterval(@PathVariable String stopCode, @PathVariable String lineRef,@PathVariable String previewInterval) {
+    @RequestMapping(value="/oneStop/{stopCode}/{lineRef}/{previewInterval}/{maxStopVisits}", method={RequestMethod.GET}, produces = "application/xml")
+    public String retrieveSiriDataOneStopAndLineRefAndPreviewInterval(@PathVariable String stopCode, @PathVariable String lineRef,@PathVariable String previewInterval, @PathVariable int maxStopVisits) {
         logger.info("before requesting Siri: stopCode={}, lineRef={}, previewInterval={}", stopCode, lineRef, previewInterval);
         String result = siriConsumeService.retrieveSpecificLineAndStop(stopCode, previewInterval, lineRef,1000);
         logger.info("after requesting Siri: stopCode={}, lineRef={}, previewInterval={}", stopCode, lineRef, previewInterval);

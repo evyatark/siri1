@@ -17,13 +17,13 @@ public class ScheduleRetrieval {
 
     @Scheduled(fixedDelay=120000)    // every 120 seconds
     public void retrieve_480_Periodically() {
-        GetStopMonitoringServiceResponse result = siriConsumeService.retrieveSiri("20594", "PT2H", "7023",1000);
+        GetStopMonitoringServiceResponse result = siriConsumeService.retrieveSiri("20594", "PT2H", "7023",7);
         siriProcessService.process(result); // asynchronous invocation
     }
 
     @Scheduled(fixedDelay=295000)    // every 295 seconds
     public void retrieve_394_Periodically() {
-        GetStopMonitoringServiceResponse result = siriConsumeService.retrieveSiri("28627", "PT6H", "7453",1000);
+        GetStopMonitoringServiceResponse result = siriConsumeService.retrieveSiri("28627", "PT6H", "7453",7);
         siriProcessService.process(result); // asynchronous invocation
     }
 
