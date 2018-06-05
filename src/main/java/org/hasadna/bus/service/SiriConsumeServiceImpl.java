@@ -195,10 +195,6 @@ public class SiriConsumeServiceImpl implements SiriConsumeService {
                         "                    <siri:PreviewInterval>__PREVIEW_INTERVAL__</siri:PreviewInterval>\n" +
                         "                    <siri:StartTime>__START__</siri:StartTime>\n" +
                         "                    <siri:LineRef>__LINE_REF__</siri:LineRef>\n" +
-                        " <siri:MinimumStopVisitsPerLine>4</siri:MinimumStopVisitsPerLine>" +
-                        "<siri:MaximumNumberOfCalls>\n" +
-                        "\t\t\t\t<siri:Onwards>10</siri:Onwards>\n" +
-                        "\t\t\t</siri:MaximumNumberOfCalls>"+
                         "                    <siri:MonitoringRef xsi:type=\"siri:MonitoringRefStructure\">__STOP_CODE__</siri:MonitoringRef>\n" +
                         "                    <siri:MaximumStopVisits>__MAX_STOP_VISITS__</siri:MaximumStopVisits>\n" +
                         "                </siri:StopMonitoringRequest>\n" ;
@@ -228,8 +224,8 @@ public class SiriConsumeServiceImpl implements SiriConsumeService {
                 "</SOAP-ENV:Envelope>\n" ;
         String s = "" ;
         logger.trace("generating {} intervals", numberOfIntervals);
-        for (int i = 0 ; i < numberOfIntervals ; i = i + durationOfIntervalInMinutes) {   // intervals of 5 minutes
-            s = s + generateStopMonitoringRequestTemplate(i);
+        for (int i = 0 ; i < numberOfIntervals ; i = i + 1) {   // intervals of 5 minutes
+            s = s + generateStopMonitoringRequestTemplate(i*durationOfIntervalInMinutes);
         }
         return template.replace("__REQUESTS__", s);
 
