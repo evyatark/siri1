@@ -21,7 +21,7 @@ public class SiriProcessServiceImpl implements SiriProcessService {
     SiriPersistService siriPersistService;
 
     @Override
-    @Async
+    @Async("threadPoolTaskExecutor")    // use a ThreadPool instead of the default SimpleAsync TaskExecutor
     public void process(GetStopMonitoringServiceResponse stopMonitorResult) {
         logger.info("processing...");
         Optional<String> summary = siriParseService.parseShortSummary(stopMonitorResult) ;
