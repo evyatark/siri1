@@ -29,7 +29,8 @@ public class ScheduleRetrieval {
         // hard coded for now
         addScheduled("20594", "PT2H", "7023",7);    // line 480 Jer-TA
         addScheduled("28627", "PT6H", "7453",7);    // line 394 Eilat-TA
-        addScheduled("42978", "PT2H", "1559",7);    // line 331 Nazaret-Haifa (working on Saturday?)
+        addScheduled("42978", "PT12H", "1559",7);    // line 331 Nazaret-Haifa (working on Saturday?)
+        addScheduled("42734", "PT12H", "17177",7);    // line 340 Nazaret-Haifa (working on Saturday?)
 
         logger.info("scheduler initialized.");
     }
