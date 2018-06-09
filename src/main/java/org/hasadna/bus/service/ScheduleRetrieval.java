@@ -7,8 +7,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import javax.annotation.PostConstruct;
+import java.util.List;
 
 @Component
 public class ScheduleRetrieval {
@@ -32,6 +34,8 @@ public class ScheduleRetrieval {
         addScheduled("42978", "PT12H", "1559",7);    // line 331 Nazaret-Haifa (working on Saturday?)
         addScheduled("42734", "PT12H", "17177",7);    // line 340 Nazaret-Haifa (working on Saturday?)
         addScheduled("47210","PT12H","3792",7); // line 40 Haifa (Saturday)
+        addScheduled("41048","PT2H","3701", 7); // line 25 Haifa Saturday
+        addScheduled("41143","PT2H","3703", 7); // line 25 Haifa Saturday (2nd direction)
         logger.info("scheduler initialized.");
     }
 
@@ -49,6 +53,12 @@ public class ScheduleRetrieval {
 
     public void addScheduled(String stopCode, String previewInterval, String lineRef, int maxStopVisits) {
         queue.put(new Command(stopCode, previewInterval, lineRef, maxStopVisits));
+    }
+
+    public int removeScheduled(String lineRef) {
+        if (StringUtils.isEmpty(lineRef)) return -1;
+        List<Command> removed = queue.removeByLineRef(lineRef);
+        return removed.size();
     }
 
     @Scheduled(fixedDelay=20000)    // every 20 seconds. This method is for ALL of the retrievals!!!

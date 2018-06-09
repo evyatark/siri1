@@ -1,6 +1,7 @@
 package org.hasadna.bus.controller;
 
 import org.hasadna.bus.entity.GetStopMonitoringServiceResponse;
+import org.hasadna.bus.service.ScheduleRetrieval;
 import org.hasadna.bus.service.SiriConsumeService;
 import org.hasadna.bus.service.SiriParseService;
 import org.slf4j.Logger;
@@ -23,6 +24,10 @@ public class SiriController {
     @Autowired
     SiriParseService siriParseService ;
 
+    @Autowired
+    ScheduleRetrieval scheduleRetrieval;
+
+
 
     @RequestMapping(value="/soap/oneStop/{stopCode}/{lineRef}/{previewInterval}/{maxStopVisits}", method={RequestMethod.GET}, produces = "application/xml")
     public GetStopMonitoringServiceResponse retrieveSiriDataOneStopAndLineRefAndPreviewIntervalSoap(@PathVariable String stopCode, @PathVariable String lineRef, @PathVariable String previewInterval, @PathVariable int maxStopVisits) {
@@ -35,6 +40,20 @@ public class SiriController {
         return result;
     }
 
+    @RequestMapping(value="/schedule/{stopCode}/{lineRef}", method={RequestMethod.GET}, produces = "application/xml")
+    public String addSchedulingForRetrieval(@PathVariable String stopCode, @PathVariable String lineRef, @RequestParam(defaultValue = "PT2H") String previewInterval) {
+        logger.debug("adding schedule for lineRef {lineRef}, stop code {stopCode}, previewInterval={previewInterval}", lineRef, stopCode, previewInterval);
+        scheduleRetrieval.addScheduled(stopCode, previewInterval, lineRef, 7);
+        return "OK";
+    }
+
+    @RequestMapping(value="/schedule/remove/{lineRef}", method={RequestMethod.GET}, produces = "application/xml")
+    public String removeSchedulingByLineRef(@PathVariable String lineRef) {
+        logger.debug("removing all schedules for lineRef {lineRef}", lineRef);
+        int numberOfRemoved = scheduleRetrieval.removeScheduled(lineRef);
+        if (numberOfRemoved < 0) return "illegal lineRef " + lineRef + "? None removed";
+        return "OK. Removed " + numberOfRemoved;
+    }
 
     @RequestMapping(value="/current/{linePublishedName}", method={RequestMethod.GET}, produces = "application/xml")
     public String retrieveCurrentSiriDataForLineByPublishedName(@PathVariable String linePublishedName) {
