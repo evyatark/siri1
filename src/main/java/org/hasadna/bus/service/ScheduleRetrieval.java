@@ -51,7 +51,7 @@ public class ScheduleRetrieval {
         queue.put(new Command(stopCode, previewInterval, lineRef, maxStopVisits));
     }
 
-    @Scheduled(fixedDelay=60000)    // every 1 minute. This method is for ALL of the retrievals!!!
+    @Scheduled(fixedDelay=20000)    // every 20 seconds. This method is for ALL of the retrievals!!!
     public void retrieveCommandPeriodically() {
         try {
             logger.trace("scheduling...");
