@@ -41,12 +41,12 @@ public class SiriController {
         return result;
     }
 
-    @RequestMapping(value="/schedule/all", method={RequestMethod.GET}, produces = "application/xml")
-    public List<String> findAllSchedulingForRetrieval() {
+    @RequestMapping(value="/schedule/all", method={RequestMethod.GET}, produces = "application/json")
+    public Object[] findAllSchedulingForRetrieval() {
         logger.debug("displaying all schedules");
         List<String> result = scheduleRetrieval.findAll();
         logger.trace("{}", result);
-        return result;
+        return result.toArray();
     }
 
     @RequestMapping(value="/schedule/{stopCode}/{lineRef}", method={RequestMethod.GET}, produces = "application/xml")
