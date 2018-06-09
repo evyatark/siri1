@@ -9,6 +9,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.stream.Collectors;
 
 @Component
 public class SortedQueue {
@@ -31,6 +32,11 @@ public class SortedQueue {
     boolean isEmpty() {
         return queue.isEmpty();
     }
+
+    public List<String> showAll() {
+        return queue.stream().map(c -> c.toString()).collect(Collectors.toList());
+    }
+
 
     List<Command> removeByLineRef(String lineRef) {
         logger.debug("removing all schedules of lineRef {}", lineRef);

@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.xml.soap.SOAPException;
 import javax.xml.soap.SOAPMessage;
+import java.util.List;
 
 @RestController
 @RequestMapping("/data")
@@ -37,6 +38,14 @@ public class SiriController {
         logger.info("result:responseTimestamp={}",result.getAnswer().getResponseTimestamp());
         String summary = siriParseService.parseShortSummary(result).orElse("---\n");
         logger.info(summary);
+        return result;
+    }
+
+    @RequestMapping(value="/schedule/all", method={RequestMethod.GET}, produces = "application/xml")
+    public List<String> findAllSchedulingForRetrieval() {
+        logger.debug("displaying all schedules");
+        List<String> result = scheduleRetrieval.findAll();
+        logger.trace("{}", result);
         return result;
     }
 

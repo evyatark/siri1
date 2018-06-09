@@ -61,6 +61,10 @@ public class ScheduleRetrieval {
         return removed.size();
     }
 
+    public List<String> findAll() {
+        return queue.showAll();
+    }
+
     @Scheduled(fixedDelay=20000)    // every 20 seconds. This method is for ALL of the retrievals!!!
     public void retrieveCommandPeriodically() {
         try {

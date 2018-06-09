@@ -53,6 +53,10 @@
         <appender-ref ref="FILE-debug" />
     </logger>
 
+    <logger name="console" level="trace" additivity="false">
+        <appender-ref ref="STDOUT" />
+    </logger>
+
     <root level="info">
         <appender-ref ref="STDOUT" />
     </root>
