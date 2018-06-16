@@ -1,26 +1,46 @@
 package org.hasadna.bus.service;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.time.LocalDateTime;
 
 public class Command {
+    public String description = "";
     public String stopCode;
     public String previewInterval;
     public String lineRef;
     public int maxStopVisits;
+    @JsonIgnore
     public LocalDateTime nextExecution;
     public int executeEvery;
 
+    public Command() {
+    }
+
+    public Command(String stopCode) {
+        this.stopCode = stopCode;
+    }
+
+    public Command(String stopCode, String previewInterval, String lineRef, int maxStopVisits, int executeEvery, String description) {
+        this(stopCode, previewInterval, lineRef, maxStopVisits, LocalDateTime.now(), executeEvery, description);
+    }
+
     public Command(String stopCode, String previewInterval, String lineRef, int maxStopVisits, LocalDateTime nextExecution, int executeEvery) {
+        this(stopCode, previewInterval, lineRef, maxStopVisits, nextExecution, executeEvery, "");
+    }
+
+    public Command(String stopCode, String previewInterval, String lineRef, int maxStopVisits, LocalDateTime nextExecution, int executeEvery, String description) {
         this.stopCode = stopCode;
         this.previewInterval = previewInterval;
         this.lineRef = lineRef;
         this.maxStopVisits = maxStopVisits;
         this.nextExecution = nextExecution;
         this.executeEvery = executeEvery;
+        this.description = description;
     }
 
     Command myClone() {
-        return new Command(this.stopCode, this.previewInterval, this.lineRef, this.maxStopVisits, this.nextExecution, this.executeEvery);
+        return new Command(this.stopCode, this.previewInterval, this.lineRef, this.maxStopVisits, this.nextExecution, this.executeEvery, this.description);
     }
 
     @Override

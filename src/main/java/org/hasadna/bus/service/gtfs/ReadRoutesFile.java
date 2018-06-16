@@ -7,8 +7,10 @@ import org.hasadna.bus.entity.gtfs.StopTimes;
 import org.hasadna.bus.entity.gtfs.Trip;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import javax.annotation.PostConstruct;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -20,7 +22,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-
+@Component
 public class ReadRoutesFile {
 
     private String dirOfGtfsFiles = "/home/evyatar/Downloads/israel-public-transportation May 2018/" ;
@@ -40,6 +42,13 @@ public class ReadRoutesFile {
     private String calendarFullPath = dirOfGtfsFiles + calendarFileName;
 
     protected final static Logger logger = LoggerFactory.getLogger("console");
+
+    public static ReadRoutesFile gtfsFiles ;
+
+    @PostConstruct
+    public void init() {
+        gtfsFiles = new ReadRoutesFile();
+    }
 
     public static void main(String[] args)
     {

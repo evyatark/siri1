@@ -23,6 +23,9 @@ public class SiriParseServiceImpl implements SiriParseService {
     @Override
     public Optional<String> parseShortSummary(GetStopMonitoringServiceResponse sm) {
         try {
+            if ((sm == null) || (sm.getAnswer() == null)) {
+                return Optional.empty();
+            }
             if (sm.getAnswer().isStatus() != null) {
                 logger.info("answer.isStatus={}", sm.getAnswer().isStatus());
             }

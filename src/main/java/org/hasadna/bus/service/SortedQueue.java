@@ -39,6 +39,16 @@ public class SortedQueue {
         return queue.isEmpty();
     }
 
+    public Command[] getAll() {
+        Command data[] = new Command[queue.size()];
+        Iterator<Command> iter = queue.iterator();
+        int i = 0 ;
+        while (iter.hasNext()) {
+            data[i++] = iter.next();
+        }
+        return data;
+    }
+
     public List<String> showAll() {
         return queue.stream().map(c -> c.toString()).collect(Collectors.toList());
     }

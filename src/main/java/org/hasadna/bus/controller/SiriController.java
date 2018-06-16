@@ -1,9 +1,11 @@
 package org.hasadna.bus.controller;
 
 import org.hasadna.bus.entity.GetStopMonitoringServiceResponse;
+import org.hasadna.bus.entity.gtfs.Route;
 import org.hasadna.bus.service.ScheduleRetrieval;
 import org.hasadna.bus.service.SiriConsumeService;
 import org.hasadna.bus.service.SiriParseService;
+import org.hasadna.bus.service.gtfs.ReadRoutesFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.xml.soap.SOAPException;
 import javax.xml.soap.SOAPMessage;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/data")
@@ -51,7 +54,7 @@ public class SiriController {
 
     @RequestMapping(value="/schedule/{stopCode}/{lineRef}", method={RequestMethod.GET}, produces = "application/xml")
     public String addSchedulingForRetrieval(@PathVariable String stopCode, @PathVariable String lineRef, @RequestParam(defaultValue = "PT2H") String previewInterval) {
-        logger.debug("adding schedule for lineRef {lineRef}, stop code {stopCode}, previewInterval={previewInterval}", lineRef, stopCode, previewInterval);
+        logger.debug("adding schedule for lineRef {}, stop code {}, previewInterval={}", lineRef, stopCode, previewInterval);
         scheduleRetrieval.addScheduled(stopCode, previewInterval, lineRef, 7);
         return "OK";
     }
@@ -64,13 +67,12 @@ public class SiriController {
         return "OK. Removed " + numberOfRemoved;
     }
 
-    @RequestMapping(value="/current/{linePublishedName}", method={RequestMethod.GET}, produces = "application/xml")
-    public String retrieveCurrentSiriDataForLineByPublishedName(@PathVariable String linePublishedName) {
+    @RequestMapping(value="/current/{linePublishedName}", method={RequestMethod.GET}, produces = "application/json")
+    public List<Route> retrieveCurrentSiriDataForLineByPublishedName(@PathVariable String linePublishedName) {
         logger.info("before requesting Siri: linePublishedName={}", linePublishedName);
-        String result = "123";// siriConsumeService.retrieveSpecificLineAndStop(stopCode, previewInterval, lineRef,1000);
-        //logger.info("after requesting Siri: stopCode={}, lineRef={}, previewInterval={}", stopCode, lineRef, previewInterval);
-        logger.info(result);
-        return result;
+        List<Route> routes = ReadRoutesFile.gtfsFiles.findRouteByPublishedName(linePublishedName, Optional.empty());
+        logger.info("{}", routes);
+        return routes;
     }
 
 
