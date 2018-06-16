@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import javax.annotation.PostConstruct;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Component
@@ -36,6 +37,12 @@ public class ScheduleRetrieval {
         addScheduled("47210","PT12H","3792",7); // line 40 Haifa (Saturday)
         addScheduled("41048","PT2H","3701", 7); // line 25 Haifa Saturday
         addScheduled("41143","PT2H","3703", 7); // line 25 Haifa Saturday (2nd direction)
+
+        // 415 Beit-Shemesh-Jer
+        addScheduled("6109", "PT2H", "8552", 7);
+        //addScheduled("5195", "PT2H", "8555", 7);
+        addScheduled("6109", "PT2H", "15527", 7);
+        //addScheduled("616", "PT2H", "15528", 7);
         logger.info("scheduler initialized.");
     }
 
@@ -52,7 +59,7 @@ public class ScheduleRetrieval {
 //    }
 
     public void addScheduled(String stopCode, String previewInterval, String lineRef, int maxStopVisits) {
-        queue.put(new Command(stopCode, previewInterval, lineRef, maxStopVisits));
+        queue.put(new Command(stopCode, previewInterval, lineRef, maxStopVisits, LocalDateTime.now(), 3 * 60));
     }
 
     public int removeScheduled(String lineRef) {
@@ -65,12 +72,25 @@ public class ScheduleRetrieval {
         return queue.showAll();
     }
 
-    @Scheduled(fixedDelay=20000)    // every 20 seconds. This method is for ALL of the retrievals!!!
+    @Scheduled(fixedDelay=1000)    // every 20 seconds. This method is for ALL of the retrievals!!!
     public void retrieveCommandPeriodically() {
+        Command first = queue.peek();
+        boolean notFirst = false;
         try {
+            LocalDateTime now = LocalDateTime.now();
             logger.trace("scheduling...");
             Command c = queue.takeFromQueue();
-            queue.put(c.myClone());
+            if (notFirst && c.equals(first)) return;    // delayed all elements in the queue
+            notFirst = true ;
+            if (c.nextExecution.isAfter(now)) {
+                queue.put(c);
+                logger.trace("delaying {} ...", c.lineRef);
+                return;
+            }
+            Command next = c.myClone();
+            next.nextExecution = now.plusSeconds(next.executeEvery);
+            queue.put(next);
+            logger.trace("retrieving {} ...", c.lineRef);
             GetStopMonitoringServiceResponse result = siriConsumeService.retrieveSiri(c.stopCode, c.previewInterval, c.lineRef, c.maxStopVisits);
             siriProcessService.process(result); // asynchronous invocation
         }

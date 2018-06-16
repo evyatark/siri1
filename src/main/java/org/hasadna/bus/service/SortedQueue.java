@@ -20,6 +20,10 @@ public class SortedQueue {
         queue.offer(command);
     }
 
+    public Command peek() {
+        return queue.peek();
+    }
+
     Command takeFromQueue() {
         return queue.poll();
     }

@@ -1,21 +1,26 @@
 package org.hasadna.bus.service;
 
+import java.time.LocalDateTime;
+
 public class Command {
     public String stopCode;
     public String previewInterval;
     public String lineRef;
     public int maxStopVisits;
+    public LocalDateTime nextExecution;
+    public int executeEvery;
 
-    public Command(String stopCode, String previewInterval, String lineRef, int maxStopVisits) {
+    public Command(String stopCode, String previewInterval, String lineRef, int maxStopVisits, LocalDateTime nextExecution, int executeEvery) {
         this.stopCode = stopCode;
         this.previewInterval = previewInterval;
         this.lineRef = lineRef;
         this.maxStopVisits = maxStopVisits;
+        this.nextExecution = nextExecution;
+        this.executeEvery = executeEvery;
     }
 
-
     Command myClone() {
-        return new Command(this.stopCode, this.previewInterval, this.lineRef, this.maxStopVisits);
+        return new Command(this.stopCode, this.previewInterval, this.lineRef, this.maxStopVisits, this.nextExecution, this.executeEvery);
     }
 
     @Override
@@ -25,6 +30,8 @@ public class Command {
                 ", previewInterval='" + previewInterval + '\'' +
                 ", lineRef='" + lineRef + '\'' +
                 ", maxStopVisits=" + maxStopVisits +
+                ", nextExecution=" + nextExecution +
+                ", executeEvery=" + executeEvery +
                 '}';
     }
 
@@ -36,18 +43,22 @@ public class Command {
         Command command = (Command) o;
 
         if (maxStopVisits != command.maxStopVisits) return false;
-        if (!stopCode.equals(command.stopCode)) return false;
-        if (!previewInterval.equals(command.previewInterval)) return false;
-        return lineRef.equals(command.lineRef);
+        if (executeEvery != command.executeEvery) return false;
+        if (stopCode != null ? !stopCode.equals(command.stopCode) : command.stopCode != null) return false;
+        if (previewInterval != null ? !previewInterval.equals(command.previewInterval) : command.previewInterval != null)
+            return false;
+        if (lineRef != null ? !lineRef.equals(command.lineRef) : command.lineRef != null) return false;
+        return nextExecution != null ? nextExecution.equals(command.nextExecution) : command.nextExecution == null;
     }
 
     @Override
     public int hashCode() {
-        int result = stopCode.hashCode();
-        result = 31 * result + previewInterval.hashCode();
-        result = 31 * result + lineRef.hashCode();
+        int result = stopCode != null ? stopCode.hashCode() : 0;
+        result = 31 * result + (previewInterval != null ? previewInterval.hashCode() : 0);
+        result = 31 * result + (lineRef != null ? lineRef.hashCode() : 0);
         result = 31 * result + maxStopVisits;
+        result = 31 * result + (nextExecution != null ? nextExecution.hashCode() : 0);
+        result = 31 * result + executeEvery;
         return result;
     }
-
 }
