@@ -9,6 +9,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.PriorityBlockingQueue;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Component
@@ -66,6 +68,8 @@ public class SortedQueue {
         logger.trace("return {}", removed);
         return removed;
     }
-    private Queue<Command> queue = new ConcurrentLinkedQueue<>();
+
+
+    private Queue<Command> queue = new PriorityBlockingQueue<>(20, (c1, c2) -> c1.nextExecution.isBefore(c2.nextExecution)?-1:1);
 
 }

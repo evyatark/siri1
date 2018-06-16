@@ -5,6 +5,7 @@ import org.hasadna.bus.entity.GetStopMonitoringServiceResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -17,6 +18,9 @@ import java.util.List;
 public class ScheduleRetrieval {
 
     protected final Logger logger = LoggerFactory.getLogger(ScheduleRetrieval.class);
+
+    @Value("${scheduler.default.interval.between.executions.minutes:3}")
+    private int defaultTimeBetweenExecutionsOfSameCommandInMinutes ;
 
     @Autowired
     SiriConsumeService siriConsumeService;
@@ -31,17 +35,17 @@ public class ScheduleRetrieval {
     public void init() {
         // hard coded for now
         addScheduled("20594", "PT2H", "7023",7);    // line 480 Jer-TA
-        addScheduled("28627", "PT6H", "7453",7);    // line 394 Eilat-TA
-        addScheduled("42978", "PT12H", "1559",7);    // line 331 Nazaret-Haifa (working on Saturday?)
-        addScheduled("42734", "PT12H", "17177",7);    // line 340 Nazaret-Haifa (working on Saturday?)
-        addScheduled("47210","PT12H","3792",7); // line 40 Haifa (Saturday)
-        addScheduled("41048","PT2H","3701", 7); // line 25 Haifa Saturday
-        addScheduled("41143","PT2H","3703", 7); // line 25 Haifa Saturday (2nd direction)
+        addScheduled("28627", "PT6H", "7453",7, 5);    // line 394 Eilat-TA
+        addScheduled("42978", "PT12H", "1559",7, 10);    // line 331 Nazaret-Haifa (working on Saturday?)
+        addScheduled("42734", "PT12H", "17177",7, 15);    // line 340 Nazaret-Haifa (working on Saturday?)
+        addScheduled("47210","PT12H","3792",7, 20); // line 40 Haifa (Saturday)
+        addScheduled("41048","PT2H","3701", 7, 25); // line 25 Haifa Saturday
+        addScheduled("41143","PT2H","3703", 7, 30); // line 25 Haifa Saturday (2nd direction)
 
         // 415 Beit-Shemesh-Jer
-        addScheduled("6109", "PT2H", "8552", 7);
+        addScheduled("6109", "PT2H", "8552", 7, 35);
         //addScheduled("5195", "PT2H", "8555", 7);
-        addScheduled("6109", "PT2H", "15527", 7);
+        addScheduled("6109", "PT2H", "15527", 7, 40);
         //addScheduled("616", "PT2H", "15528", 7);
         logger.info("scheduler initialized.");
     }
@@ -59,7 +63,11 @@ public class ScheduleRetrieval {
 //    }
 
     public void addScheduled(String stopCode, String previewInterval, String lineRef, int maxStopVisits) {
-        queue.put(new Command(stopCode, previewInterval, lineRef, maxStopVisits, LocalDateTime.now(), 3 * 60));
+        queue.put(new Command(stopCode, previewInterval, lineRef, maxStopVisits, LocalDateTime.now(), defaultTimeBetweenExecutionsOfSameCommandInMinutes * 60));
+    }
+
+    public void addScheduled(String stopCode, String previewInterval, String lineRef, int maxStopVisits, int plusSeconds) {
+        queue.put(new Command(stopCode, previewInterval, lineRef, maxStopVisits, LocalDateTime.now().plusSeconds(plusSeconds), defaultTimeBetweenExecutionsOfSameCommandInMinutes * 60));
     }
 
     public int removeScheduled(String lineRef) {
@@ -74,19 +82,15 @@ public class ScheduleRetrieval {
 
     @Scheduled(fixedDelay=1000)    // every 20 seconds. This method is for ALL of the retrievals!!!
     public void retrieveCommandPeriodically() {
-        Command first = queue.peek();
-        boolean notFirst = false;
+        Command head = queue.peek();
         try {
             LocalDateTime now = LocalDateTime.now();
-            logger.trace("scheduling...");
-            Command c = queue.takeFromQueue();
-            if (notFirst && c.equals(first)) return;    // delayed all elements in the queue
-            notFirst = true ;
-            if (c.nextExecution.isAfter(now)) {
-                queue.put(c);
-                logger.trace("delaying {} ...", c.lineRef);
+            //logger.trace("scheduling...");
+            if (head.nextExecution.isAfter(now)) {
+                //logger.trace("delaying {} until {} ...", head.lineRef, head.nextExecution);
                 return;
             }
+            Command c = queue.takeFromQueue();
             Command next = c.myClone();
             next.nextExecution = now.plusSeconds(next.executeEvery);
             queue.put(next);
