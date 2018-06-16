@@ -46,7 +46,8 @@ public class Command {
     @Override
     public String toString() {
         return "Command{" +
-                "stopCode='" + stopCode + '\'' +
+                "description='" + description + '\'' +
+                ", stopCode='" + stopCode + '\'' +
                 ", previewInterval='" + previewInterval + '\'' +
                 ", lineRef='" + lineRef + '\'' +
                 ", maxStopVisits=" + maxStopVisits +
