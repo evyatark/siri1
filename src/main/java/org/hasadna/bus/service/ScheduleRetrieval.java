@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -90,14 +91,14 @@ public class ScheduleRetrieval {
                 logger.info("read data: {}", data);
                 List<Command> list = data.d;
                 int counter = 0 ;
-                int delayBetweenInvocation = 5; // seconds
-                if (list.size() > defaultTimeBetweenExecutionsOfSameCommandInMinutes * 60 / delayBetweenInvocation) {
-                    delayBetweenInvocation = 1 ;
+                int delayBeforeFirstInvocation = 4; // seconds
+                if (list.size() > defaultTimeBetweenExecutionsOfSameCommandInMinutes * 60 / delayBeforeFirstInvocation) {
+                    delayBeforeFirstInvocation = 1 ;
                 }
                 for (Command c : list) {
                     if (c.nextExecution == null) {
                         c.nextExecution = LocalDateTime.now().plusSeconds(counter);
-                        counter = counter + delayBetweenInvocation;
+                        counter = counter + delayBeforeFirstInvocation;
                     }
                 }
                 return list;
@@ -145,8 +146,13 @@ public class ScheduleRetrieval {
         return queue.showAll();
     }
 
-    @Scheduled(fixedDelay=1000)    // every 20 seconds. This method is for ALL of the retrievals!!!
+
+    // TODO  configure thread pool for retrieval
+    // see https://www.callicoder.com/spring-boot-task-scheduling-with-scheduled-annotation/
+    @Scheduled(fixedRate=100)    // every 1 seconds. This method is for ALL of the retrievals!!!
+    @Async("http-retrieve")
     public void retrieveCommandPeriodically() {
+        logger.trace("scheduled started");
         Command head = queue.peek();
         try {
             LocalDateTime now = LocalDateTime.now();
@@ -160,7 +166,8 @@ public class ScheduleRetrieval {
             next.nextExecution = now.plusSeconds(next.executeEvery);
             queue.put(next);
             logger.trace("retrieving {} ...", c.lineRef);
-            GetStopMonitoringServiceResponse result = siriConsumeService.retrieveSiri(c.stopCode, c.previewInterval, c.lineRef, c.maxStopVisits);
+            //GetStopMonitoringServiceResponse result = siriConsumeService.retrieveSiri(c.stopCode, c.previewInterval, c.lineRef, c.maxStopVisits);
+            GetStopMonitoringServiceResponse result = siriConsumeService.retrieveSiri(c);
             siriProcessService.process(result); // asynchronous invocation
         }
         catch (Exception ex) {

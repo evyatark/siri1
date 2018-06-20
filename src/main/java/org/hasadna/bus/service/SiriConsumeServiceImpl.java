@@ -36,6 +36,27 @@ public class SiriConsumeServiceImpl implements SiriConsumeService {
     final String SIRI_SERVICES_URL = "http://siri.motrealtime.co.il:8081/Siri/SiriServices";
 
     @Override
+    public GetStopMonitoringServiceResponse retrieveSiri(Command command) {
+
+        if ("extended".equals(command.stopCode)) {
+            invokeAccordingTo(command);
+        }
+        else {
+            return retrieveSiri(command.stopCode, command.previewInterval, command.lineRef, command.maxStopVisits);
+        }
+        return null;
+    }
+
+    private void invokeAccordingTo(Command command) {
+        // currently we have only one "extended" implementation, so it is here
+        try {
+            Thread.sleep(3000);
+        } catch (InterruptedException e) {
+            // absorb on purpose
+        }
+    }
+
+    @Override
     public GetStopMonitoringServiceResponse retrieveSiri(String stopCode, String previewInterval, String lineRef, int maxStopVisits) {
         StopWatch sw1 = new StopWatch(Thread.currentThread().getName());
         sw1.start();

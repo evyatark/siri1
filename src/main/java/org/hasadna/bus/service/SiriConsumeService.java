@@ -7,7 +7,7 @@ import javax.xml.soap.SOAPMessage;
 public interface SiriConsumeService {
 
     GetStopMonitoringServiceResponse retrieveSiri(String stopCode, String previewInterval, String lineRef, int maxStopVisits);
-
+    GetStopMonitoringServiceResponse retrieveSiri(Command command);
 
 
 

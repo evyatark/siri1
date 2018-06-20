@@ -37,6 +37,30 @@ public class SiriMockServiceImpl implements SiriConsumeService {
 
     final String SIRI_SERVICES_URL = "http://siri.motrealtime.co.il:8081/Siri/SiriServices";
 
+    @Override
+    public GetStopMonitoringServiceResponse retrieveSiri(Command command) {
+
+        if ("extended".equals(command.stopCode)) {
+            invokeAccordingTo(command);
+        }
+        else {
+            return retrieveSiri(command.stopCode, command.previewInterval, command.lineRef, command.maxStopVisits);
+        }
+        return null;
+    }
+
+    private void invokeAccordingTo(Command command) {
+        // currently we have only one "extended" implementation, so it is here
+        try {
+            int sleepTimeInMs = command.maxStopVisits * 1000 ;
+            logger.info("start executing {}: sleep {} ms", command.description, sleepTimeInMs);
+            Thread.sleep(sleepTimeInMs);
+            logger.info("end sleep {} ms", sleepTimeInMs);
+        } catch (InterruptedException e) {
+            // absorb on purpose
+        }
+    }
+
 
     @Override
     public String retrieveFromSiri(String request) {
@@ -83,13 +107,14 @@ public class SiriMockServiceImpl implements SiriConsumeService {
         try {
             logger.info("retrieveSiri");
             String content = retrieveSpecificLineAndStop(stopCode, previewInterval, lineRef, maxStopVisits);
-
+            logger.info("xml retrieved, converting to response...");
             JAXBContext jaxbContext = JAXBContext.newInstance(GetStopMonitoringServiceResponse.class);
             Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
             StreamSource streamSource = new StreamSource(new StringReader(content));
             JAXBElement<GetStopMonitoringServiceResponse> je = jaxbUnmarshaller.unmarshal(streamSource, GetStopMonitoringServiceResponse.class);
 
             GetStopMonitoringServiceResponse response = (GetStopMonitoringServiceResponse)je.getValue();
+            logger.info("converting done");
             return response;
 
         } catch (Exception e) {

@@ -14,9 +14,27 @@ import java.util.concurrent.Executor;
 @EnableAsync
 public class BusApplication {
 
-	@Bean(name = "threadPoolTaskExecutor")
+	/**
+	 * This thread-pool is used for threads that do the processing!
+	 * (not the retrieval)
+	 * @return
+	 */
+	@Bean(name = "process-response")
 	public Executor threadPoolTaskExecutor() {
-		return new ThreadPoolTaskExecutor();
+		ThreadPoolTaskExecutor x = new ThreadPoolTaskExecutor();
+		x.setCorePoolSize(20);
+		x.setMaxPoolSize(50);
+		return x;
+		//return new ThreadPoolTaskExecutor();
+	}
+
+	@Bean(name = "http-retrieve")	// scheduler Threads
+	public Executor mythreadPoolTaskExecutor() {
+		ThreadPoolTaskExecutor x = new ThreadPoolTaskExecutor();
+		x.setCorePoolSize(5);
+		x.setMaxPoolSize(6);
+		return x;
+		//return new ThreadPoolTaskExecutor();
 	}
 
 	public static void main(String[] args) {
