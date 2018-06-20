@@ -1,5 +1,6 @@
 package org.hasadna.bus;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -14,6 +15,19 @@ import java.util.concurrent.Executor;
 @EnableAsync
 public class BusApplication {
 
+	@Value("${pool.process.response.core.pool.size:20}")
+	private int poolProcessResponseCorePoolSize ;
+
+	@Value("${pool.process.response.max.pool.size:25}")
+	private int poolProcessResponseMaxPoolSize ;
+
+	@Value("${pool.http.retrieve.core.pool.size:5}")
+	private int poolHttpRetrieveCorePoolSize ;
+
+	@Value("${pool.http.retrieve.max.pool.size:10}")
+	private int poolHttpRetrieveMaxPoolSize ;
+
+
 	/**
 	 * This thread-pool is used for threads that do the processing!
 	 * (not the retrieval)
@@ -22,19 +36,17 @@ public class BusApplication {
 	@Bean(name = "process-response")
 	public Executor threadPoolTaskExecutor() {
 		ThreadPoolTaskExecutor x = new ThreadPoolTaskExecutor();
-		x.setCorePoolSize(20);
-		x.setMaxPoolSize(50);
+		x.setCorePoolSize(poolProcessResponseCorePoolSize);
+		x.setMaxPoolSize(poolProcessResponseMaxPoolSize);
 		return x;
-		//return new ThreadPoolTaskExecutor();
 	}
 
 	@Bean(name = "http-retrieve")	// scheduler Threads
 	public Executor mythreadPoolTaskExecutor() {
 		ThreadPoolTaskExecutor x = new ThreadPoolTaskExecutor();
-		x.setCorePoolSize(5);
-		x.setMaxPoolSize(6);
+		x.setCorePoolSize(poolHttpRetrieveCorePoolSize);
+		x.setMaxPoolSize(poolHttpRetrieveMaxPoolSize);
 		return x;
-		//return new ThreadPoolTaskExecutor();
 	}
 
 	public static void main(String[] args) {

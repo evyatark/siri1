@@ -146,13 +146,21 @@ public class ScheduleRetrieval {
         return queue.showAll();
     }
 
-
-    // TODO  configure thread pool for retrieval
-    // see https://www.callicoder.com/spring-boot-task-scheduling-with-scheduled-annotation/
-    @Scheduled(fixedRate=100)    // every 1 seconds. This method is for ALL of the retrievals!!!
+    /**
+     * This method will execute every 100 ms.
+     * It can execute in one of ${pool.http.retrieve.core.pool.size} threads.
+     * If execution does not complete after 100 ms, the next execution will
+     * happen in a different thread (if there is an available thread in the pool)
+     *
+     * Inside, the method takes the next task from the queue, and executes it
+     * (but only if its "nextExecution" time has passed).
+     * Before executing, it adds the same task again to the queue (with an updated
+     * date for next execution)
+     */
+    @Scheduled(fixedRate=100)    // every 100 ms.
     @Async("http-retrieve")
     public void retrieveCommandPeriodically() {
-        logger.trace("scheduled started");
+        //logger.trace("scheduled started");
         Command head = queue.peek();
         try {
             LocalDateTime now = LocalDateTime.now();
