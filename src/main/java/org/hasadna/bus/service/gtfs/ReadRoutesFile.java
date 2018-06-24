@@ -7,6 +7,9 @@ import org.hasadna.bus.entity.gtfs.StopTimes;
 import org.hasadna.bus.entity.gtfs.Trip;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -16,8 +19,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -25,7 +30,9 @@ import java.util.stream.Stream;
 @Component
 public class ReadRoutesFile {
 
-    private String dirOfGtfsFiles = "/home/evyatar/Downloads/israel-public-transportation May 2018/" ;
+    @Value("${gtfs.dir.location:/home/evyatar/work/hasadna/open-bus/gtfs/GTFS-2018-06-20/}")
+    private String dirOfGtfsFiles ;
+            //"/home/evyatar/Downloads/israel-public-transportation May 2018/" ;
     private String fileName = "routes.txt";
     private String fullPath = dirOfGtfsFiles + fileName;
 
@@ -43,13 +50,68 @@ public class ReadRoutesFile {
 
     protected final static Logger logger = LoggerFactory.getLogger("console");
 
-    public static ReadRoutesFile gtfsFiles ;
+    //public static ReadRoutesFile gtfsFiles ;
+
+    public Map<String, List<StopTimes>> stopTimesByTripId = new ConcurrentHashMap<>();
+    private static List<String> cacheStopTimes = new LinkedList<>();
+    public Map<String, Stop> stopsById = new HashMap<>();
+    public Map<String, Stop> stopsByCode = new HashMap<>();
+    public List<Stop> stops = new ArrayList<>();
+    public List<Trip> allTrips = new ArrayList<>();
+    public Map<String, Route> routesById = new ConcurrentHashMap<>();
+    List<Calendar> allCalendars = new ArrayList<>();
+    // map publishedName (such as "480") to list of routes
+    public Map<String, List<Route>> routesByPublishedName = new ConcurrentHashMap<>();
+
+    @Autowired
+    DataInit dataInit;
 
     @PostConstruct
     public void init() {
-        gtfsFiles = new ReadRoutesFile();
+        logger.info("init in PostConstruct started");
+        //gtfsFiles = new ReadRoutesFile();
+        cacheCalendars();
+        initStops();
+        cacheAllTrips();
+
+        cacheRoutes();
+        initializeRoutesByPublishedNameMap();
+
+        // this will cache StopTimes, and init stopTimesByTripId
+        //dataInit.initStopTimesByTripId(this);
+        logger.info("init in PostConstruct completed");
     }
 
+    private String updateProgress(int counter, int total) {
+        String progress = Float.toString( Math.round (counter * 100.0 / total) ) ;
+        if (progress.indexOf(".") > 0) {
+            progress = progress.substring(0, progress.indexOf("."));
+        }
+        progress = progress + "%";
+        if (counter % 1000 == 0) {
+            logger.info("progress: {} ({}/{})", progress, counter, total);
+        }
+        return progress;
+    }
+
+    private void initOneTrip(Trip trip) {
+        List<StopTimes> st = findStopTimesAtInit(trip.tripId);
+        if ((st != null) && !st.isEmpty()) {
+            stopTimesByTripId.put(trip.tripId, st);
+        }
+    }
+
+    public List<StopTimes> findStopTimes(String tripId) {
+        List<StopTimes> ret = stopTimesByTripId.get(tripId);
+        if (ret == null) {
+            for (Trip trip : allTrips.stream().filter(trip -> trip.tripId.equals(tripId)).collect(Collectors.toList())) {
+                initOneTrip(trip);
+            }
+            return stopTimesByTripId.get(tripId);
+        }
+        else return ret;
+    }
+/*
     public static void main(String[] args)
     {
         // 415 BS-Jer 15527 6109
@@ -61,20 +123,34 @@ public class ReadRoutesFile {
         // 420 BS-Jer 15531 6109
         ReadRoutesFile rrf = new ReadRoutesFile();
 //        rrf.findTrips("15527");
-        rrf.findRouteByPublishedName("420", Optional.of("בית שמש")).forEach(r -> logger.info(r.toString()) );
+        rrf.findRouteByPublishedName("15", Optional.of("בית שמש")).forEach(r -> logger.info(r.toString()) );
         //if (true) return;
         //List<Route> routeIds = rrf.findRouteByPublishedName("597", Optional.of("בית שמש"));
         //String routeId = "12774";   // 416
-        List<String> routeIds = Arrays.asList("15531");
+        List<String> routeIds = Arrays.asList("15541");
         for (String routeId : routeIds) {
             List<String> stopCodes = rrf.findLastStopCodeByRouteId(routeId);
             logger.info("stopCodes (last stop in route {}): {}", routeId, stopCodes);
         }
-        rrf.findDepartueTime(routeIds.get(0), 7);//LocalDateTime.now().getDayOfWeek().getValue());
+        rrf.findDepartueTime(rrf.findTripsById(routeIds.get(0)), DayOfWeek.SUNDAY);//LocalDateTime.now().getDayOfWeek().getValue());
+    }
+*/
+    public List<String> findLastStopCodeByRouteId(String routeId) {
+        return findLastStopCodeByRouteId(routeId, false);
     }
 
-    public List<String> findLastStopCodeByRouteId(String routeId) {
-        List<Trip> trips = findTrips(routeId);
+    public DepartureTimes findDeparturesByRouteId(String routeId) {
+        List<Trip> trips = findTripsById(routeId);
+        return findDepartureTime(trips, routeId);
+    }
+    @Cacheable("lastStopCodeOfRoute")
+    public List<String> findLastStopCodeByRouteId(String routeId, boolean shortProcessing) {
+        logger.info("find stopCodes (last stop in route {})", routeId);
+        List<Trip> trips = findTripsById(routeId);
+        if (shortProcessing) {
+            logger.info("shortProcessing: will search only first trip");
+            trips = Arrays.asList(trips.get(0));
+        }
         Set<String> lastStopsInTrip = new HashSet<>();
         lastStopsInTrip = trips.
                 stream().
@@ -89,10 +165,17 @@ public class ReadRoutesFile {
         return stopCodes;
     }
 
-    private static List<String> cacheStopTimes = new LinkedList<>();
+//    private List<Trip> filterByDay(List<Trip> trips, DayOfWeek dayOfWeek) {
+//        for (Trip trip : trips) {
+//
+//        }
+//
+//        return null;
+//    }
+
 
     private void readAllLinesOfStopTimesFileAndDoItFast() {
-        //List<StopTimes> inputList = new ArrayList<>();
+        if (!cacheStopTimes.isEmpty()) return;
         try{
             File inputF = new File(stopTimesFullPath);
             InputStream inputFS = new FileInputStream(inputF);
@@ -114,7 +197,8 @@ public class ReadRoutesFile {
         return item;
     };
 
-    public List<StopTimes> findStopTimes(String tripId) {
+
+    public List<StopTimes> findStopTimesAtInit(String tripId) {
         try {
             if (cacheStopTimes.isEmpty()) {
                 if (!(Paths.get(stopTimesFullPath).toFile().exists() &&
@@ -127,28 +211,9 @@ public class ReadRoutesFile {
                 //String str = new String(Files.readAllBytes(Paths.get(stopTimesFullPath)), StandardCharsets.UTF_8);
                 logger.info("stop. all file in my cache!, size={}", cacheStopTimes.size());
             }
-//            List<StopTimes> stopTimes = Files.lines(Paths.get(stopTimesFullPath)).
-//                    filter(line -> line.startsWith(tripId)).
-//                    map(ReadRoutesFile::parseStopTimesLine).
-//                    flatMap(o -> o.isPresent() ? Stream.of(o.get()) : Stream.empty()).
-//                    collect(Collectors.toList());
-            // This will read content of file to memory!
-//            if (cacheStopTimes == null) {
-//                logger.info("...");
-//                cacheStopTimes = Files.lines(Paths.get(stopTimesFullPath)).
-//                        map(ReadRoutesFile::parseStopTimesLine).
-//                        flatMap(o -> o.isPresent() ? Stream.of(o.get()) : Stream.empty()).
-//                        //map(st -> { System.out.print(","); return st;}).
-//                        collect(Collectors.toList());
-//                logger.info("!");
-//            }
             List<StopTimes> stopTimes = cacheStopTimes.stream().
-                    //filter(stopTime -> stopTime.tripId.equals(tripId)).
                     filter(line -> line.startsWith(tripId)).
                     map(mapToItem).
-                    //map(ReadRoutesFile::parseStopTimesLine).
-                    //map(opt -> opt.get()).
-                    //map(st -> { System.out.print("."); return st;}).
                     collect(Collectors.toList());
             return stopTimes;
         } catch (Exception e) {
@@ -158,7 +223,9 @@ public class ReadRoutesFile {
     }
 
     public StopTimes findLastStopIdOfTrip(String tripId) {
+        logger.info("search stops for trip {}", tripId);
         List<StopTimes> stopTimes = findStopTimes(tripId);
+        logger.info("found {} stopTimes", stopTimes.size());
         StopTimes lastStop = findLastStopInSequence(stopTimes);
         //logger.trace("tripId={}, lastStop: {}", tripId, lastStop);
         return lastStop;
@@ -166,9 +233,9 @@ public class ReadRoutesFile {
 
     public StopTimes findFirstStopIdOfTrip(String tripId) {
         List<StopTimes> stopTimes = findStopTimes(tripId);
-        StopTimes firstStop = findFirstStopInSequence(stopTimes);
+        Optional<StopTimes> firstStop = findFirstStopInSequence(stopTimes);
         //logger.trace("tripId={}, firstStop: {}", tripId, lastStop);
-        return firstStop;
+        return firstStop.isPresent() ? firstStop.get() : null ;
     }
 
     private StopTimes findLastStopInSequence(List<StopTimes> stopTimes) {
@@ -179,49 +246,63 @@ public class ReadRoutesFile {
                 get();
     }
 
-    private StopTimes findFirstStopInSequence(List<StopTimes> stopTimes) {
+    private Optional<StopTimes> findFirstStopInSequence(List<StopTimes> stopTimes) {
         return stopTimes.
                 stream().
                 sorted((st1, st2) -> {return st1.stopSequence - st2.stopSequence;}).
-                findFirst().
-                get();
+                findFirst();
     }
 
-    private void findDepartueTime(String routeId, int dayOfWeek) {
-        List<Trip> trips = findTrips(routeId);
+    private List<String> findDepartureTime(final Trip trip, final Set<String> serviceIds, final DayOfWeek dayOfWeek) {
+        List<Calendar> calendars = getCalendars(serviceIds, dayOfWeek);
+        List<String> departueTimes = Arrays.asList(trip)
+                .stream().
+                        filter(tr -> calendars.stream().anyMatch(c -> c.serviceId.equals(tr.serviceId))).
+                        map(tr -> findFirstStopIdOfTrip(tr.tripId)).
+                        map(st -> st.departureTime).
+                        sorted().
+                        collect(Collectors.toList());
+        return departueTimes;
+    }
+    private DepartureTimes findDepartureTime(List<Trip> trips, String routeId) {
+        DepartureTimes dt = new DepartureTimes(routeId, routesById.get(routeId).routeShortName);
         Set<String> serviceIds = trips.stream().map(trip -> trip.serviceId).collect(Collectors.toSet());
-        List<Calendar> calendars = readCalendars(serviceIds, dayOfWeek);
-        for (Trip tr : trips) {
-            //logger.info("tripId={}, serviceId={}", tr.tripId, tr.serviceId);
-            //logger.info("we have {} calendars for serviceId {}", calendars.size(), tr.serviceId);
-//            List<Calendar> calendarsTuesday = calendars.stream().filter(c -> c.tuesday).collect(Collectors.toList());
-//            logger.info("we have {} calendars for serviceId {} on Tuesday", calendarsTuesday.size(), tr.serviceId);
-            //if (calendars.isEmpty()) continue;
-            if (calendars.stream().anyMatch(c -> c.serviceId.equals(tr.serviceId))) {
-                StopTimes st = findFirstStopIdOfTrip(tr.tripId);
-                logger.info("trip {} (service {})- departue time {}    {}", tr.tripId, tr.serviceId, st.departureTime, tr);
+        for (DayOfWeek dayOfWeek : sortedWeekDays()) {
+            for (Trip trip : trips) {
+                List<Calendar> calendars = getCalendars(serviceIds, dayOfWeek);
+                List<String> departureTimes = findDepartureTime(trip, serviceIds, dayOfWeek);
+                dt.addDepartureTimes(dayOfWeek, departureTimes);
             }
         }
-        List<String> departueTimes =
-            trips.stream().
-                filter(tr -> calendars.stream().anyMatch(c -> c.serviceId.equals(tr.serviceId))).
-                map(tr -> findFirstStopIdOfTrip(tr.tripId)).
-                map(st -> st.departureTime).
-                sorted().
-                collect(Collectors.toList());
-        logger.info("departure times (on day {}) for route {}: {}", dayOfWeek, routeId,departueTimes);
+        for (DayOfWeek dayOfWeek : sortedWeekDays()) {
+            Collections.sort(dt.departures.get(dayOfWeek));
+            logger.info("departure times (on day {}): {}", dayOfWeek, dt.departures.get(dayOfWeek));
+        }
+        return dt;
     }
 
-    private boolean isDayOfWeek(Calendar c, int dayOfWeek) {
+    private DayOfWeek[] sortedWeekDays() {
+        return new DayOfWeek[] {
+                DayOfWeek.SUNDAY,
+                DayOfWeek.MONDAY,
+                DayOfWeek.TUESDAY,
+                DayOfWeek.WEDNESDAY,
+                DayOfWeek.THURSDAY,
+                DayOfWeek.FRIDAY,
+                DayOfWeek.SATURDAY
+        } ;
+    }
+
+    private boolean isDayOfWeek(Calendar c, DayOfWeek dayOfWeek) {
         switch (dayOfWeek) {
-            case 7 : return c.sunday;
-            case 1 : return c.monday;
-            case 2 : return c.tuesday;
-            case 3 : return c.wednesday;
-            case 4 : return c.thursday;
-            case 5 : return c.friday;
-            case 6 : return c.saturday;
-            default: return false;
+            case SUNDAY:    return c.sunday;
+            case MONDAY:    return c.monday;
+            case TUESDAY:   return c.tuesday;
+            case WEDNESDAY: return c.wednesday;
+            case THURSDAY:  return c.thursday;
+            case FRIDAY:    return c.friday;
+            case SATURDAY:  return c.saturday;
+            default:        return false;
         }
     }
 
@@ -245,6 +326,26 @@ public class ReadRoutesFile {
         }
     }
 
+    public Stop findStopByCode(String stopCode) {
+        if (!(Paths.get(stopsFullPath).toFile().exists() &&
+                Paths.get(stopsFullPath).toFile().canRead())) {
+            logger.error("file {} does not exist or can't be read", stopsFullPath);
+        }
+        try {
+            Stop stop = Files.
+                    lines(Paths.get(stopsFullPath)).
+                    map(ReadRoutesFile::parseStopLine).
+                    flatMap(o -> o.isPresent() ? Stream.of(o.get()) : Stream.empty()).
+                    filter(st -> st.stopCode.equals(stopCode)).
+                    collect(Collectors.toList()).get(0);
+            //logger.debug("{}", stop);
+            return stop;
+        } catch (IOException ex) {
+            logger.error("", ex);
+            return null;
+        }
+    }
+
     public String findStopCode(String stopId) {
         Stop stop = findStopById(stopId);
         logger.debug("{}", stop);
@@ -252,57 +353,74 @@ public class ReadRoutesFile {
     }
 
 
-    public List<Trip> findTrips(String routeId) {
+    private void cacheAllTrips() {
+        if (!allTrips.isEmpty()) {
+            return ;    // already cached
+        }
         if (!(Paths.get(tripsFullPath).toFile().exists() &&
                 Paths.get(tripsFullPath).toFile().canRead())) {
-            logger.error("file {} does not exist or can't be read", tripsFullPath);
+            logger.error("trips file {} does not exist or can't be read", tripsFullPath);
         }
         try {
-            List<Trip> trips = Files.
+            logger.info("started reading trips file");
+            allTrips = Files.
                     lines(Paths.get(tripsFullPath)).
-                    filter(line -> line.startsWith(routeId)).
                     map(ReadRoutesFile::parseTripsLine).
                     flatMap(o -> o.isPresent() ? Stream.of(o.get()) : Stream.empty()).
-                    filter(trip -> trip.routeId.equals(routeId)).
                     collect(Collectors.toList());
-//            List<Trip> trips = Files.
-//                    lines(Paths.get(tripsFullPath)).
-//                    map(ReadRoutesFile::parseTripsLine).
-//                    flatMap(o -> o.isPresent() ? Stream.of(o.get()) : Stream.empty()).
-//                    filter(trip -> trip.routeId.equals(routeId)).
-//                    collect(Collectors.toList());
             //logger.debug("{}",trips.toString());//.replaceAll("},", "}\n").replace("[", "[\n "));
-            return trips;
+            logger.info("finished reading trips file");
         } catch (IOException ex) {
             logger.error("", ex);
-            return new ArrayList<>();
         }
+
     }
 
-    public List<Route> findRouteByPublishedName(String linePublishedName, Optional<String> cityInRouteName) {
+    @Cacheable("tripsById")
+    public List<Trip> findTripsById(String routeId) {
+        cacheAllTrips();
+        List<Trip> trips = allTrips.stream().
+                    filter(trip -> trip.routeId.equals(routeId)).
+                    collect(Collectors.toList());
+        return trips;
+    }
 
-        Path p = Paths.get(fullPath);
-        p.toFile().exists();
-
-        p.toFile().canRead();
-
+    private void cacheRoutes() {
         try {
+            if (!routesById.isEmpty()) return ;
+
             Stream<String> stream = Files.lines(Paths.get(fullPath));
 
             List<Route> routes =
-                stream.
-                    map(ReadRoutesFile::parseLine).
-                    flatMap(o -> o.isPresent() ? Stream.of(o.get()) : Stream.empty()).
-                    filter(route -> route.routeShortName.equals(linePublishedName)).
-                    collect(Collectors.toList());
-            if (cityInRouteName.isPresent()) {
-                routes = routes.stream().filter(route -> route.routeLongName.contains(cityInRouteName.get())).collect(Collectors.toList());
+                    stream.
+                            map(ReadRoutesFile::parseLine).
+                            flatMap(o -> o.isPresent() ? Stream.of(o.get()) : Stream.empty()).
+                            collect(Collectors.toList());
+            for (Route route : routes) {
+                routesById.put(route.routeId, route);
             }
-            return routes;
         } catch (IOException ex) {
             logger.error("", ex);
-            return new ArrayList<>();
         }
+        logger.info("init routes");
+    }
+
+    public List<Route> findRouteByPublishedName(String linePublishedName, final Optional<String> cityInRouteName) {
+            List<Route> routes = routesById.values().stream().
+                    filter(route -> route.routeShortName.equals(linePublishedName)).
+                    filter (route -> {
+                        if (cityInRouteName.isPresent()) {
+                            return route.routeLongName.contains(cityInRouteName.get());
+                        }
+                        else return true;
+                    } ).
+                    collect(Collectors.toList());
+            return routes;
+    }
+
+    public Route findRouteById(String routeId) {
+        cacheRoutes();
+        return routesById.get(routeId);
     }
 
     private static Optional<Route> parseLine(String line) {
@@ -380,34 +498,83 @@ public class ReadRoutesFile {
     }
 
 
-    public List<Calendar> readCalendars(Set<String> serviceIds, int forWeekDay) {
+    public List<Calendar> getCalendars(Set<String> serviceIds, DayOfWeek dayOfWeek) {
         List<Calendar> calendars = new ArrayList<>();
         for (String serviceId : serviceIds) {
-            List<Calendar> cals = readCalendar(serviceId, forWeekDay);
+            List<Calendar> cals = getCalendar(serviceId, dayOfWeek);
             calendars.addAll(cals);
         }
         return  calendars;
     }
 
-    public List<Calendar> readCalendar(String serviceId, int forWeekDay) {
+
+    private void cacheCalendars() {
+        if (!allCalendars.isEmpty()) return;
         if (!(Paths.get(calendarFullPath).toFile().exists() &&
                 Paths.get(calendarFullPath).toFile().canRead())) {
             logger.error("file {} does not exist or can't be read", calendarFullPath);
         }
         try {
-            List<Calendar> cal = Files.
+            allCalendars = Files.
                     lines(Paths.get(calendarFullPath)).
                     map(ReadRoutesFile::parseCalendarLine).
                     flatMap(o -> o.isPresent() ? Stream.of(o.get()) : Stream.empty()).
-                    filter(calendar -> calendar.serviceId.equals(serviceId) && isDayOfWeek(calendar, forWeekDay)).
                     collect(Collectors.toList());
             //logger.debug("{}",cal.toString());//.replaceAll("},", "}\n").replace("[", "[\n "));
-            return cal;
         } catch (IOException ex) {
             logger.error("", ex);
-            return new ArrayList<>();
         }
+
+    }
+    public List<Calendar> getCalendar(String serviceId, DayOfWeek dayOfWeek) {
+        cacheCalendars();
+        List<Calendar> cal = allCalendars.stream().
+                filter(calendar -> calendar.serviceId.equals(serviceId) && isDayOfWeek(calendar, dayOfWeek)).
+                collect(Collectors.toList());
+        //logger.debug("{}",cal.toString());//.replaceAll("},", "}\n").replace("[", "[\n "));
+        return cal;
     }
 
+
+
+
+    public void initializeRoutesByPublishedNameMap() {
+        cacheRoutes();
+        logger.info("init routesByPublishedName started");
+        List<String> allPublishedNames =
+            routesById.values().stream().
+                map(route -> route.routeShortName).
+                collect(Collectors.toList());
+        for (String pName : allPublishedNames) {
+            List<Route> routes = findRouteByPublishedName(pName, Optional.empty());
+            if ((routes != null) && !routes.isEmpty()) {
+                routesByPublishedName.put(pName, routes);
+            }
+        }
+        logger.info("init routesByPublishedName completed");
+    }
+
+
+    private void initStops() {
+        if (!(Paths.get(stopsFullPath).toFile().exists() &&
+                Paths.get(stopsFullPath).toFile().canRead())) {
+            logger.error("file {} does not exist or can't be read", stopsFullPath);
+        }
+        try {
+            stops = Files.
+                    lines(Paths.get(stopsFullPath)).
+                    map(ReadRoutesFile::parseStopLine).
+                    flatMap(o -> o.isPresent() ? Stream.of(o.get()) : Stream.empty()).
+                    map(stop -> {
+                       stopsById.put(stop.stopId, stop);
+                       stopsByCode.put(stop.stopCode, stop);
+                       return stop;
+                    }).
+                    collect(Collectors.toList());
+            //logger.debug("{}", stop);
+        } catch (IOException ex) {
+            logger.error("", ex);
+        }
+    }
 
 }

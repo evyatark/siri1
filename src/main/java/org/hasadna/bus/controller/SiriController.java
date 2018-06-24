@@ -31,6 +31,8 @@ public class SiriController {
     @Autowired
     ScheduleRetrieval scheduleRetrieval;
 
+    @Autowired
+    ReadRoutesFile rrf;
 
 
     @RequestMapping(value="/soap/oneStop/{stopCode}/{lineRef}/{previewInterval}/{maxStopVisits}", method={RequestMethod.GET}, produces = "application/xml")
@@ -70,7 +72,7 @@ public class SiriController {
     @RequestMapping(value="/current/{linePublishedName}", method={RequestMethod.GET}, produces = "application/json")
     public List<Route> retrieveCurrentSiriDataForLineByPublishedName(@PathVariable String linePublishedName) {
         logger.info("before requesting Siri: linePublishedName={}", linePublishedName);
-        List<Route> routes = ReadRoutesFile.gtfsFiles.findRouteByPublishedName(linePublishedName, Optional.empty());
+        List<Route> routes = rrf.findRouteByPublishedName(linePublishedName, Optional.empty());
         logger.info("{}", routes);
         return routes;
     }
