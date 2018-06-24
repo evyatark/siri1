@@ -54,7 +54,7 @@
     </logger>
 
     <logger name="console" level="trace" additivity="false">
-        <appender-ref ref="STDOUT" />
+        <appender-ref ref="FILE-debug" />
     </logger>
 
     <root level="info">
