@@ -13,7 +13,7 @@ import java.util.concurrent.Executor;
 
 @SpringBootApplication
 @EnableScheduling
-//@EnableCaching
+@EnableCaching
 @EnableAsync
 public class BusApplication {
 

@@ -69,7 +69,12 @@ public class ReadRoutesFile {
     @PostConstruct
     public void init() {
         logger.info("init in PostConstruct started");
-        //gtfsFiles = new ReadRoutesFile();
+        fullPath = dirOfGtfsFiles + fileName;
+        tripsFullPath = dirOfGtfsFiles + tripsFileName;
+        stopTimesFullPath = dirOfGtfsFiles + stopTimesFileName;
+        stopsFullPath = dirOfGtfsFiles + stopsFileName;
+        calendarFullPath = dirOfGtfsFiles + calendarFileName;
+
         cacheCalendars();
         initStops();
         cacheAllTrips();
