@@ -407,11 +407,12 @@ public class ReadRoutesFile {
         } catch (IOException ex) {
             logger.error("", ex);
         }
-        logger.info("init routes");
+        logger.info("init routesById completed, size={}", routesById.keySet().size());
     }
 
     public List<Route> findRouteByPublishedName(String linePublishedName, final Optional<String> cityInRouteName) {
-            List<Route> routes = routesById.values().stream().
+        logger.trace("findRouteByPublishedName, linePublishedName={}, city={}", linePublishedName, cityInRouteName);
+        List<Route> routes = routesById.values().stream().
                     filter(route -> route.routeShortName.equals(linePublishedName)).
                     filter (route -> {
                         if (cityInRouteName.isPresent()) {
@@ -420,7 +421,8 @@ public class ReadRoutesFile {
                         else return true;
                     } ).
                     collect(Collectors.toList());
-            return routes;
+        logger.trace("findRouteByPublishedName, return list of size {}", routes.size());
+        return routes;
     }
 
     public Route findRouteById(String routeId) {

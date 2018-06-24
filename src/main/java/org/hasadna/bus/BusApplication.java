@@ -12,7 +12,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import java.util.concurrent.Executor;
 
 @SpringBootApplication
-@EnableScheduling
+//@EnableScheduling
 @EnableCaching
 @EnableAsync
 public class BusApplication {
